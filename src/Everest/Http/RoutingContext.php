@@ -18,7 +18,7 @@ use Closure;
  *  - routes
  *  - route parameter pattern
  *  - host (optional)
- *  - middlewares
+ *  - middlewares (before and after handling)
  *  - sub contexts
  *
  * Each context (except the root context) has 
@@ -36,307 +36,346 @@ use Closure;
 
 class RoutingContext {
 
-	/**
-	 * Callable that invokes this context
-	 * by adding routes, middlewares, pattern and
-	 * default handlers.
-	 * @var Closure
-	 */
-	
-	private $invoker;
+  public const BEFORE    = 'before';
+  public const AFTER     = 'after';
+
+  private const MIDDLEWARE_TYPES = [
+    self::BEFORE, 
+    self::AFTER 
+  ];
+
+  /**
+   * Callable that invokes this context
+   * by adding routes, middlewares, pattern and
+   * default handlers.
+   * @var Closure
+   */
+  
+  private $invoker;
 
 
-	/**
-	 * The parent routing context
-	 * @var Everest\Http\RoutingContext
-	 */
-	
-	private $parent;
+  /**
+   * The parent routing context
+   * @var Everest\Http\RoutingContext
+   */
+  
+  private $parent;
 
 
-	/**
-	 * The context preifx
-	 * if this context has no prefix
-	 * @var string
-	 */
-	
-	private $prefix;
+  /**
+   * The context preifx
+   * if this context has no prefix
+   * @var string
+   */
+  
+  private $prefix;
 
-	/**
-	 * Middlewares used by this context
-	 *
-	 * @var array[callable]
-	 */
-	
-	private $middlewares = [];
-
-
-	/**
-	 * The routes with their handlers 
-	 * controlled by this context
-	 * @var array[array[Everest\Http\Route, callable]]
-	 */
-	
-	private $routes = [];
+  /**
+   * Middlewares used by this context
+   *
+   * @var array[]
+   */
+  
+  private $middlewares = [
+    self::BEFORE    => [],
+    self::AFTER     => []
+  ];
 
 
-	/**
-	 * Subcontexts owned by this context
-	 * @var array[Everest\Http\RoutingContext]
-	 */
-	
-	private $contexts = [];
+  /**
+   * The routes with their handlers 
+   * controlled by this context
+   * @var array[array[Everest\Http\Route, callable]]
+   */
+  
+  private $routes = [];
 
 
-	/**
-	 * Pattern von route parameter in this context
-	 * @var array[string]
-	 */
-	
-	private $pattern = [];
+  /**
+   * Subcontexts owned by this context
+   * @var array[Everest\Http\RoutingContext]
+   */
+  
+  private $contexts = [];
 
 
-	/**
-	 * A host the request URI has to match
-	 * @var string|null
-	 */
-	
-	private $host = null;
+  /**
+   * Pattern von route parameter in this context
+   * @var array[string]
+   */
+  
+  private $pattern = [];
 
 
-	/**
-	 * The default handler for this context.
-	 * These handler get's called when an error
-	 * is thrown during the handling of this 
-	 * context.
-	 * @var callable
-	 */
-	
-	private $default;
-
-	public function __construct(string $prefix = null, Closure $invoker = null, RoutingContext $parent = null)
-	{
-		$this->prefix  = $prefix ? trim($prefix, "\n\r\t/ ") : '';
-
-		$this->invoker = $invoker;
-		$this->parent  = $parent;
-	}
+  /**
+   * A host the request URI has to match
+   * @var string|null
+   */
+  
+  private $host = null;
 
 
-	/**
-	 * Gets path prefix of this context and all its parents
-	 *
-	 * @param  string $path (optional)
-	 *    The parents prefix
-	 *
-	 * @return string
-	 *    The prefixed path
-	 */
-	
-	public function getPrefixedPath(string $path = '') : string
-	{
-		return trim($this->parent ? 
-			($this->parent->getPrefixedPath($this->prefix ? $this->prefix . '/' . $path : $path)) :
-			($this->prefix ? $this->prefix . '/' . $path : $path), '/');
-	}
+  /**
+   * The default handler for this context.
+   * These handler get's called when an error
+   * is thrown during the handling of this 
+   * context.
+   * @var callable
+   */
+  
+  private $default;
 
 
-	/**
-	 * Adds a new parameter to this context
-	 *
-	 * @param string $name
-	 *    The parameter name that must match this pattern
-	 * @param string $pattern
-	 *    The regex pattern
-	 *
-	 * @return void
-	 */
-	
-	public function addPattern(string $name, string $pattern) 
-	{
-		$this->pattern[$name] = $pattern;
-	}
+  /**
+   * @throws \InvalidArgumentException I
+   *   If provided middleware type does not exist.
+   *
+   * @param string $type
+   *   The middleware type to validate
+   *
+   * @return string
+   *   The middleware type
+   */
+  
+  private static function validateMiddlewareType(string $type) : string
+  {
+    if (!in_array($type, self::MIDDLEWARE_TYPES)) {
+      throw new \InvalidArgumentException(sprintf(
+        'Provided middleware type does not exist. Use one of %s instead.',
+        implode(', ', self::MIDDLEWARE_TYPES)
+      ));
+    }
+
+    return $type;
+  }
+
+  public function __construct(string $prefix = null, Closure $invoker = null, RoutingContext $parent = null)
+  {
+    $this->prefix  = $prefix ? trim($prefix, "\n\r\t/ ") : '';
+
+    $this->invoker = $invoker;
+    $this->parent  = $parent;
+  }
 
 
-	/**
-	 * Gets all parameter pattern of this context
-	 *
-	 * @return array[string]
-	 *   The pattern
-	 */
-	
-	public function getPattern() : array
-	{
-		return $this->pattern;
-	}
+  /**
+   * Gets path prefix of this context and all its parents
+   *
+   * @param  string $path (optional)
+   *    The parents prefix
+   *
+   * @return string
+   *    The prefixed path
+   */
+  
+  public function getPrefixedPath(string $path = '') : string
+  {
+    return trim($this->parent ? 
+      ($this->parent->getPrefixedPath($this->prefix ? $this->prefix . '/' . $path : $path)) :
+      ($this->prefix ? $this->prefix . '/' . $path : $path), '/');
+  }
 
 
-	/**
-	 * Adds a new middleware to this context
-	 *
-	 * @param callable $middleware
-	 *    The middleware
-	 *
-	 * @return void
-	 */
-	
-	public function addMiddleware(callable $middleware)
-	{
-		$this->middlewares[] = $middleware;
-	}
+  /**
+   * Adds a new parameter to this context
+   *
+   * @param string $name
+   *    The parameter name that must match this pattern
+   * @param string $pattern
+   *    The regex pattern
+   *
+   * @return void
+   */
+  
+  public function addPattern(string $name, string $pattern) 
+  {
+    $this->pattern[$name] = $pattern;
+  }
 
 
-	/**
-	 * Gets all middlewares of this context
-	 * and its parent contexts
-	 *
-	 * @param  array[callable]  $middlewares
-	 *    Middlewares to merge into this contexts middlewares
-	 *
-	 * @return array[callable]
-	 *   The middlewares of this context and its parent contexts
-	 */
-	
-	public function getMiddlewares(array $middlewares = []) : array
-	{
-		return $this->parent ? 
-			$this->parent->getMiddlewares(array_merge($middlewares, $this->middlewares)) :
-			array_merge($middlewares, $this->middlewares);
-	}
+  /**
+   * Gets all parameter pattern of this context
+   *
+   * @return array[string]
+   *   The pattern
+   */
+  
+  public function getPattern() : array
+  {
+    return $this->pattern;
+  }
 
 
-	/**
-	 * Adds a new route and its handler to this context
-	 *
-	 * @param Everest\Http\Route $route
-	 *    The new route
-	 * @param callable $handler
-	 *    The route handler
-	 *
-	 * @return void
-	 */
-	
-	public function addRoute(Route $route, $handler)
-	{
-		$this->routes[] = [$route, $handler];
-	}
+  /**
+   * Adds a new middleware to this context
+   *
+   * @param callable $middleware
+   *    The middleware
+   *
+   * @return void
+   */
+  
+  public function addMiddleware(callable $middleware, string $type = self::BEFORE)
+  {
+    $type = self::validateMiddlewareType($type);
+    $this->middlewares[$type][] = $middleware;
+  }
 
 
-	/**
-	 * Gets all routes of this context
-	 *
-	 * @return array[Everest\Http\Route]
-	 *    The routes
-	 */
-	
-	public function getRoutes() : array
-	{
-		return $this->routes;
-	}
+  /**
+   * Gets all middlewares of this context
+   * and its parent contexts
+   *
+   * @param  array[callable]  $middlewares
+   *    Middlewares to merge into this contexts middlewares
+   *
+   * @return array[callable]
+   *   The middlewares of this context and its parent contexts
+   */
+  
+  public function getMiddlewares(array $middlewares = [], string $type = self::BEFORE) : array
+  {
+    $type = self::validateMiddlewareType($type);
+    $middlewares = array_merge($middlewares, $this->middlewares[$type]);
+
+    return $this->parent ? 
+      $this->parent->getMiddlewares($middlewares, $type) :
+      $middlewares;
+  }
 
 
-	/**
-	 * Adds a new sub context to this context
-	 *
-	 * @param string  $prefix
-	 *    The path prefix of this context
-	 * @param Closure $invoker
-	 *    The closure invoking the new sub context
-	 *
-	 * @return Everest\Http\RoutingContext
-	 *    The new sub context
-	 */
-	
-	public function addSubContext(string $prefix, Closure $invoker) : RoutingContext
-	{
-		return $this->contexts[] = new RoutingContext($prefix, $invoker, $this);
-	}
+  /**
+   * Adds a new route and its handler to this context
+   *
+   * @param Everest\Http\Route $route
+   *    The new route
+   * @param callable $handler
+   *    The route handler
+   *
+   * @return void
+   */
+  
+  public function addRoute(Route $route, $handler)
+  {
+    $this->routes[] = [$route, $handler];
+  }
 
 
-	/**
-	 * Gets all sub contexts of this context
-	 *
-	 * @return array[Everest\Http\RoutingContext]
-	 *    The sub contexts
-	 */
-	
-	public function getSubContexts() : array
-	{
-		return $this->contexts;
-	}
+  /**
+   * Gets all routes of this context
+   *
+   * @return array[Everest\Http\Route]
+   *    The routes
+   */
+  
+  public function getRoutes() : array
+  {
+    return $this->routes;
+  }
 
 
-	/**
-	 * Sets the host name of this context
-	 *
-	 * @param string|null $host
-	 *    The new host name of this context or `null` to unset
-	 *
-	 * @return self
-	 */
-	
-	public function setHost(string $host = null)
-	{
-		$this->host = $host;
-		return $this;
-	}
+  /**
+   * Adds a new sub context to this context
+   *
+   * @param string  $prefix
+   *    The path prefix of this context
+   * @param Closure $invoker
+   *    The closure invoking the new sub context
+   *
+   * @return Everest\Http\RoutingContext
+   *    The new sub context
+   */
+  
+  public function addSubContext(string $prefix, Closure $invoker) : RoutingContext
+  {
+    return $this->contexts[] = new RoutingContext($prefix, $invoker, $this);
+  }
 
 
-	/**
-	 * Returns this host name of this context
-	 * or `null` if none is set
-	 *
-	 * @return string|null
-	 */
-	
-	public function getHost() :? string
-	{
-		return $this->host;
-	}
+  /**
+   * Gets all sub contexts of this context
+   *
+   * @return array[Everest\Http\RoutingContext]
+   *    The sub contexts
+   */
+  
+  public function getSubContexts() : array
+  {
+    return $this->contexts;
+  }
 
 
-	/**
-	 * Sets the default handler for this context
-	 *
-	 * @param callable $defaultHandler
-	 *    The default handler
-	 *
-	 * @return void
-	 */
-	
-	public function setDefault(callable $defaultHandler)
-	{
-		$this->default = $defaultHandler;
-	}
+  /**
+   * Sets the host name of this context
+   *
+   * @param string|null $host
+   *    The new host name of this context or `null` to unset
+   *
+   * @return self
+   */
+  
+  public function setHost(string $host = null)
+  {
+    $this->host = $host;
+    return $this;
+  }
 
 
-	/**
-	 * Gets the default handler for this context or null
-	 * if none is set
-	 *
-	 * @return callable|null
-	 *    The default handler or null
-	 */
-	
-	public function getDefault()
-	{
-		return $this->default;
-	}
+  /**
+   * Returns this host name of this context
+   * or `null` if none is set
+   *
+   * @return string|null
+   */
+  
+  public function getHost() :? string
+  {
+    return $this->host;
+  }
 
 
-	/**
-	 * Invokes this context
-	 *
-	 * @param  Everest\Http\Router $router
-	 *    The router invoking this context
-	 *
-	 * @return self
-	 */
-	
-	public function __invoke(Router $router)
-	{
-		if ($this->invoker) {
-			($this->invoker)($router);
-		}
-	}
+  /**
+   * Sets the default handler for this context
+   *
+   * @param callable $defaultHandler
+   *    The default handler
+   *
+   * @return void
+   */
+  
+  public function setDefault(callable $defaultHandler)
+  {
+    $this->default = $defaultHandler;
+  }
+
+
+  /**
+   * Gets the default handler for this context or null
+   * if none is set
+   *
+   * @return callable|null
+   *    The default handler or null
+   */
+  
+  public function getDefault()
+  {
+    return $this->default;
+  }
+
+
+  /**
+   * Invokes this context
+   *
+   * @param  Everest\Http\Router $router
+   *    The router invoking this context
+   *
+   * @return self
+   */
+  
+  public function __invoke(Router $router)
+  {
+    if ($this->invoker) {
+      ($this->invoker)($router);
+    }
+  }
 }
