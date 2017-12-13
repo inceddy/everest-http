@@ -23,9 +23,9 @@ use Everest\Http\Requests\Request;
 
 class Route {
 
-	// user/{id[0-9+]?}
+	// user/{id|[0-9+]?}
 	private const VAR_PATTERN = '/\{([a-z0-9\-_]+)(?:|([^\}]+))?\}/i';
-	private const ALLOWED_CHARS = '[a-z0-9_\.~\-]+';
+	private const ALLOWED_CHARS = '[a-z0-9_\.~\-%]+';
 
 
 	/**
