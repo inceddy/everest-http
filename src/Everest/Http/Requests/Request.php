@@ -105,17 +105,17 @@ class Request implements MessageInterface, RequestInterface {
     // Set method flag
     $this->method = self::validateMethod($method);
 
-    // Set protocol version
-    $this->protocolVersion = self::validateProtocolVersion($protocolVersion);
-
     // Set uri
     $this->uri = Uri::from($uri);
+
+    // Set headers
+    $this->headers = new HeaderCollection($headers);
 
     // Set body
     $this->body = Stream::from($body);
 
-    // Set headers
-    $this->headers = new HeaderCollection($headers);    
+    // Set protocol version
+    $this->protocolVersion = self::validateProtocolVersion($protocolVersion);
   }
 
   public function getRequestTarget() : string
@@ -179,7 +179,11 @@ class Request implements MessageInterface, RequestInterface {
 
   public function isMethod($method) : bool
   {
-    return (bool)(self::validateMethod($method) & $this->method);
+    if (!is_int($method)) {
+      $method = self::validateMethod($method);
+    }
+
+    return (bool)($method & $this->method);
   }
 
   /**
