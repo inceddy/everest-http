@@ -297,11 +297,20 @@ class ServerRequest extends Request implements RequestInterface {
       $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
       
       $serverRequest = new ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
-      
+
+      $contentType = $serverRequest->getHeader('Content-Type');
+
+      if (!empty($contentType) && stripos($contentType[0], 'application/json')) {
+        $parsedBody = json_decode($body->getContents(), true);
+      }
+      else {
+        $parsedBody = $_POST;
+      }
+
       $instance = $serverRequest
         ->withCookieParams($_COOKIE)
         ->withQueryParams($_GET)
-        ->withParsedBody($_POST)
+        ->withParsedBody($parsedBody)
         ->withUploadedFiles($_FILES);
     }
 
