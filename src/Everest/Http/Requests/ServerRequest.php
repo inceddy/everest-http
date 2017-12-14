@@ -513,7 +513,7 @@ class ServerRequest extends Request implements RequestInterface {
 
   public function getAttribute(string $name, $default = null)
   {
-    return $this->attributes ?: $default;
+    return $this->attributes[$name] ?? $default;
   }
 
 
