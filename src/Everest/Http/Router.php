@@ -446,7 +446,6 @@ class Router {
 
       // Test for local pattern
       if (null === $parameter = $route->parse($uri)) {
-        if ($this->options['debug']) fwrite(STDERR, "\nPrefix $prefix -> {$route->buildRoutePattern()}\n");
         continue;
       }
 
@@ -456,9 +455,11 @@ class Router {
           continue 2;
         }
       }
+
+      $request = $request->withAttribute('parameter', $parameter);
       
       // Execute route handler and before middleware
-      $result = $composedMiddlewareBefore($handler)($request, $parameter);
+      $result = $composedMiddlewareBefore($handler)($request);
 
       // Call next handler if `null` was returned
       if (null === $result) {
@@ -472,7 +473,7 @@ class Router {
     // Use context default handler to handle errors occured
     if ($defaultHandler = $this->currentContext->getDefault()) {
       return $composedMiddlewareAfter([$this, 'resultToResponse'])(
-        $composedMiddlewareBefore($defaultHandler)($request, [])
+        $composedMiddlewareBefore($defaultHandler)($request)
       );
     }
 

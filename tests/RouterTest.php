@@ -18,12 +18,10 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
 
   public function setUp()
   {
-    // Mock request
-    $this->request = $this->getMockBuilder(ServerRequest::CLASS)
-      ->disableOriginalConstructor()
-      ->getMock();
-    $this->request->method('getUri')->willReturn(Uri::from('http://steingrebe.de/prefix/test?some=value#hash'));
-    $this->request->method('isMethod')->willReturn(true);
+    $this->request = new ServerRequest(
+      ServerRequest::HTTP_ALL, 
+      Uri::from('http://steingrebe.de/prefix/test?some=value#hash')
+    );
   }
 
   /**
@@ -103,19 +101,18 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
     $result = 
     $router
       // Closure middleware
-      ->before(function(Closure $next, ...$args) {
-        return $next('test', ...$args);
+      ->before(function(Closure $next, ServerRequest $request) {
+        return $next($request, 'A');
       })
       // Object middleware
-      ->before(new Middleware('test'))
+      ->before(new Middleware('B'))
       ->after(function(Closure $next, $response){
         return $next($response . 'After');
       })
-      ->get('prefix/test', function($arg1, $arg2, $request, $params) {
-        $this->assertEquals('test', $arg1);
-        $this->assertEquals('test', $arg2);
-        $this->assertInstanceOf(Request::CLASS, $request);
-        $this->assertEquals([], $params);
+      ->get('prefix/test', function(ServerRequest $request, $add1, $add2) {
+        $this->assertEquals('A', $add1);
+        $this->assertEquals('B', $add2);
+        $this->assertEquals([], $request->getAttribute('parameter'));
 
         return 'Response';
       })

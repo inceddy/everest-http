@@ -1,4 +1,5 @@
 <?php
+use Everest\Http\Requests\ServerRequest;
 
 class Middleware {
 
@@ -9,8 +10,9 @@ class Middleware {
 		$this->extraArgument = $extraArgument;
 	}
 
-	public function __invoke(Closure $next, ...$args)
+	public function __invoke(Closure $next, ServerRequest $request, ...$args)
 	{
-		return $next($this->extraArgument, ...$args);
+		array_push($args, $this->extraArgument);
+		return $next($request, ... $args);
 	}
 }
