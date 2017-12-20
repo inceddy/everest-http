@@ -15,7 +15,6 @@ use Everest\Http\MessageTrait;
 use Everest\Http\Cookie;
 use Everest\Http\Stream;
 use Everest\Http\Collections\HeaderCollection;
-use InvalidArgumentException;
 
 class Response implements ResponseInterface
 {
@@ -50,7 +49,7 @@ class Response implements ResponseInterface
   protected static function validateStatusCode(int $code) : int
   {
     if (!array_key_exists($code, self::STATUS_CODE_MAP)) {
-      throw new InvalidArgumentException(sprintf('The HTTP status code %s is unknown.', $code));
+      throw new \InvalidArgumentException(sprintf('The HTTP status code %s is unknown.', $code));
     }
 
     return $code;
@@ -167,7 +166,7 @@ class Response implements ResponseInterface
   public function sendHeaders()
   {
     if (headers_sent()) {
-      throw new RuntimeException('Headers already sent.');
+      throw new \RuntimeException('Headers already sent.');
     }
 
     foreach ($this->headers as $name => $values) {
