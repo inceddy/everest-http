@@ -432,9 +432,11 @@ class ServerRequest extends Request implements RequestInterface {
 
   public function getCookieParam(string $name, $default = null)
   {
-    return $this->cookie && $this->cookie->has($name) ?
-           $this->cookie->get($name) :
-           $default;
+    if (!$this->cookie) {
+      return $default;
+    }
+
+    return $this->cookie->get($name) ?: $default;
   }
 
   public function withCookieParams(array $cookieParams)
@@ -453,9 +455,7 @@ class ServerRequest extends Request implements RequestInterface {
 
   public function getServerParam(string $name, $default = null)
   {
-    return $this->sever->has($name) ? 
-           $this->server->get($name) : 
-           $default;
+    return $this->server->get($name) ?: $default;
   }
 
   /**
