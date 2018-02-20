@@ -370,7 +370,7 @@ class Uri {
   public function withPath(string $path) : Uri
   {
     // Absolute path
-    if ($path[0] === '/') {
+    if ($path !== '' && $path[0] === '/') {
       return $this->withPathPrepend($path);
     }
 
