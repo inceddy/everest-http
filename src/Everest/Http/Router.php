@@ -337,10 +337,14 @@ class Router {
       };
     }, array_reverse($middlewares));
 
-    return function ($handler) use ($curryedMiddlewares) {
-      $handler = function(...$args) use ($handler) {
-        return call_user_func_array($handler, $args);
-      };
+    return function ($handler = null) use ($curryedMiddlewares) {
+      $handler = $handler 
+        ? function(...$args) use ($handler) {
+          return call_user_func_array($handler, $args);
+        }
+        : function(...$args) {
+          return $args;
+        };
       return array_reduce($curryedMiddlewares, function($state, $middleware){
         return function(...$args) use($state, $middleware) {
           return $middleware($state)(...$args);
@@ -377,6 +381,32 @@ class Router {
       default:
         throw new Exception('Invalid route handler return value');
     }
+  }
+
+  private function handleRoute(Route $route, $handler, ServerRequest $request, ... $args)
+  {
+    // Test for method (eg. HTTP_GET, HTTP_POST, ...)
+    if (!$request->isMethod($route->getMethods())) {
+      return null;
+    }
+
+    // Test for local pattern
+    if (null === $parameter = $route->parse($request->getUri())) {
+      return null;
+    }
+
+    // Test for global pattern
+    foreach (array_intersect_key($this->currentContext->getPattern(), $parameter) as $name => $pattern) {
+      if (0 === preg_match($pattern , $parameter[$name])) {
+        return null;
+      }
+    }
+
+    foreach ($parameter as $name => $value) {
+      $request = $request->withAttribute($name, $value);
+    }
+
+    return call_user_func($handler, $request->withAttribute('parameter', $parameter), ... $args);
   }
 
   private function handleContext(ServerRequest $request, RoutingContext $context, bool $isRoot = false) :? Response
@@ -431,35 +461,19 @@ class Router {
       $this->currentContext->getMiddlewares([], RoutingContext::AFTER)
     );
 
+    $beforeMiddlewareResult = $composedMiddlewareBefore(null)($request);
+
     // Handle routes
     foreach ($routes as $routeAndHandler) {
       [$route, $handler] = $routeAndHandler;
 
-      // Test for method (eg. HTTP_GET, HTTP_POST, ...)
-      if (!$request->isMethod($route->getMethods())) {
-        continue;
-      }
-
-      // Prefix route
+      // Prefix route with current context prefix
       $route->setPrefix($prefix);
-
-
-      // Test for local pattern
-      if (null === $parameter = $route->parse($uri)) {
-        continue;
-      }
-
-      // Test for global pattern
-      foreach (array_intersect_key($this->currentContext->getPattern(), $parameter) as $name => $pattern) {
-        if (0 === preg_match($pattern , $parameter[$name])) {
-          continue 2;
-        }
-      }
-
-      $request = $request->withAttribute('parameter', $parameter);
       
       // Execute route handler and before middleware
-      $result = $composedMiddlewareBefore($handler)($request);
+      //$result = $composedMiddlewareBefore($handler)($request, $route);
+
+      $result = $this->handleRoute($route, $handler, ... $beforeMiddlewareResult);
 
       // Call next handler if `null` was returned
       if (null === $result) {
