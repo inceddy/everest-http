@@ -4,7 +4,7 @@ use Everest\Http\Responses\RedirectResponse;
 use Everest\Http\Uri;
 
 
-class RedirectResponseTest extends \PHPUnit_Framework_TestCase {
+class RedirectResponseTest extends \PHPUnit\Framework\TestCase {
 
 	public function testRedirect()
 	{

@@ -14,7 +14,7 @@ require __DIR__ . '/fixtures/Middleware.php';
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class RouterTest extends \PHPUnit_Framework_TestCase {
+class RouterTest extends \PHPUnit\Framework\TestCase {
 
   public function setUp()
   {
@@ -94,6 +94,26 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
     })->handle($this->request);
   }
 
+  public function testContextWithVariables()
+  {
+    $test = $this;
+    $router = new Router(['debug' => true]);
+    $router
+    ->before(function(Closure $next, ServerRequest $request) {
+      return $next($request->withUri(
+        $request->getUri()->withPathPrepend('blaa')
+      ));
+    })
+    ->get('/blaa/blub',function() use ($test) {
+      $test->assertTrue(true);
+      return 'Response!';
+    })
+    ->handle(new ServerRequest(
+      ServerRequest::HTTP_ALL, 
+      Uri::from('http://steingrebe.de/blub')
+    ));
+  }
+
   public function testMiddleware()
   {
     $test = $this;
@@ -132,14 +152,14 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
         $router
           // Sub context middleware
           ->before(new Middleware('arg2'))
-          ->get('test', function($arg1, $arg2, $request, $params) {
-              $this->assertEquals('test', $arg1);
-              $this->assertEquals('test', $arg2);
-              $this->assertInstanceOf(Request::CLASS, $request);
-              $this->assertEquals([], $params);
+          ->get('test', function(ServerRequest $request, $arg2, $arg1) {
+              $this->assertEquals('arg1', $arg1);
+              $this->assertEquals('arg2', $arg2);
+
               return 'Middleware Response!';
           });
-      });
+      })
+      ->handle($this->request);
   }
 
   public function testDefaultHandlerOnEmptyResult()

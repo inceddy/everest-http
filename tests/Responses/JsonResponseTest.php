@@ -3,7 +3,7 @@
 use Everest\Http\Responses\JsonResponse;
 
 
-class JsonResponseTest extends \PHPUnit_Framework_TestCase {
+class JsonResponseTest extends \PHPUnit\Framework\TestCase {
 
 	public function testJson()
 	{

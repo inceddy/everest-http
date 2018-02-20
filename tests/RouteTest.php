@@ -6,7 +6,7 @@ use Everest\Http\Route;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class RouteTest extends \PHPUnit_Framework_TestCase {
+class RouteTest extends \PHPUnit\Framework\TestCase {
 
   public function setUp()
   {
@@ -77,6 +77,9 @@ class RouteTest extends \PHPUnit_Framework_TestCase {
 
     $route = new Route('test/path/{id|\d+}');
     $this->assertEquals(['id' => '123'], $route->parse($uri));
+
+    $route = new Route('test/path/{id|[a-z]+}');
+    $this->assertEquals(null, $route->parse($uri));
 
     $route = new Route('test/path/{id|[a-z]+}');
     $this->assertEquals(null, $route->parse($uri));

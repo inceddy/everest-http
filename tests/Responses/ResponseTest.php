@@ -5,7 +5,7 @@ use Everest\Http\Stream;
 use Everest\Http\Cookie;
 
 
-class ResponseTest extends \PHPUnit_Framework_TestCase {
+class ResponseTest extends \PHPUnit\Framework\TestCase {
 
 	public function testHeaders()
 	{

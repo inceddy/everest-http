@@ -5,7 +5,7 @@ use Everest\Http\Collections\HeaderCollection;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class HeaderCollectionTest extends \PHPUnit_Framework_TestCase {
+class HeaderCollectionTest extends \PHPUnit\Framework\TestCase {
 
 
   public function testEmptyCollection()

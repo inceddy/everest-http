@@ -6,15 +6,16 @@ use Everest\Http\Route;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class UriTest extends \PHPUnit_Framework_TestCase {
+class UriTest extends \PHPUnit\Framework\TestCase {
 
 	public function testConstructor()
 	{
 		$uri = new Uri([
 			'scheme' => 'stg',
-			'password' => 'secret',
 			'host' => 'some-hostname.de'
 		]);
+		$this->assertSame('stg', $uri->getScheme());
+		$this->assertSame('some-hostname.de', $uri->getHost());
 	}
 
 	public function testFrom()
@@ -38,36 +39,25 @@ class UriTest extends \PHPUnit_Framework_TestCase {
 		$uri = Uri::from(null);
 	}
 
-	public function testFromString()
+	public function uriStringProvider()
 	{
-		$uriString = 'https://username:password@example.com:8080/some/path/somefile.php?id=some_id&cache=false#anchor';
+		return [
+			['https://username:password@example.com:8080/some/path/somefile.php?id=some_id&cache=false#anchor'],
+			['https://example.com:8080/some/path/somefile.php?id=some_id&cache=false#anchor'],
+			['https://example.com/some/path/somefile.php?id=some_id&cache=false#anchor'],
+			['https://example.com/some/path/somefile.php?id=some_id&cache=false'],
+			['https://example.com/some/path/somefile.php'],
+			['https://example.com/some/path']
+		];
+	}
+
+	/**
+	 * @dataProvider uriStringProvider
+	 */
+	
+	public function testFromString($uriString)
+	{
 		$uriObject = Uri::from($uriString);
-
-		$this->assertSame($uriString, (string)$uriObject);
-
-		$uriString = 'https://example.com:8080/some/path/somefile.php?id=some_id&cache=false#anchor';
-		$uriObject = Uri::from($uriString);
-
-		$this->assertSame($uriString, (string)$uriObject);
-
-		$uriString = 'https://example.com/some/path/somefile.php?id=some_id&cache=false#anchor';
-		$uriObject = Uri::from($uriString);
-
-		$this->assertSame($uriString, (string)$uriObject);
-
-		$uriString = 'https://example.com/some/path/somefile.php?id=some_id&cache=false';
-		$uriObject = Uri::from($uriString);
-
-		$this->assertSame($uriString, (string)$uriObject);
-
-		$uriString = 'https://example.com/some/path/somefile.php';
-		$uriObject = Uri::from($uriString);
-
-		$this->assertSame($uriString, (string)$uriObject);
-
-		$uriString = 'https://example.com/some/path';
-		$uriObject = Uri::from($uriString);
-
 		$this->assertSame($uriString, (string)$uriObject);
 	}
 

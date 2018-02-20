@@ -25,6 +25,7 @@ class ServerRequestTest extends WebTestCase {
 	public function testSeverRequestFromGlobals()
 	{
 		$request = ServerRequest::fromGlobals();
+		$this->assertInstanceOf(ServerRequest::CLASS, $request);
 	}
 
 	public function testInitialQueryParams()

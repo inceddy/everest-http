@@ -5,7 +5,7 @@ use Everest\Http\Collections\ParameterCollection;
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
-class ParameterCollectionTest extends \PHPUnit_Framework_TestCase {
+class ParameterCollectionTest extends \PHPUnit\Framework\TestCase {
 
 
   public function testEmptyCollection()

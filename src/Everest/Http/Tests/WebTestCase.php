@@ -12,12 +12,12 @@
 namespace Everest\Http\Tests;
 use Everest\Http\Uri;
 
-if (!class_exists('PHPUnit_Framework_TestCase')) {
+if (!class_exists('\PHPUnit\Framework\TestCase')) {
   die ('PHPUnit is missing');
 }
 
 
-class WebTestCase extends \PHPUnit_Framework_TestCase {
+class WebTestCase extends \PHPUnit\Framework\TestCase {
 
   public function setupWebRequest(Uri $uri = null)
   {
