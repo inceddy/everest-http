@@ -404,8 +404,21 @@ class Router {
 
   private function handleContext(ServerRequest $request, RoutingContext $context, bool $isRoot = false) :? Response
   {
-    // Cache ref on orginal request
-    $orgRequest = $request;
+    $uri  = $request->getUri();
+    $host = $context->getHost();
+
+    // Early return if context host does not match the request host
+    if ($host && strcasecmp($host, $uri->getHost()) == 0) {
+      return null;
+    }
+
+    $path = $uri->getPath();
+    $prefix = $context->getPrefixedPath();
+
+    // Early return if context prefix does not match the request path
+    if ($prefix && strpos($path, $prefix) !== 0) {
+      return null;
+    }
 
     // Save current context to restore it after this context is handled
     $prevContext = $this->currentContext;
@@ -416,26 +429,13 @@ class Router {
     // Invoke context
     $context($this);
 
+    // Save orginal request
+    $orgRequest = $request;
+
     // Compose before middlewares
     $request = $this->composeMiddleware(
-      $context->getMiddlewares(RoutingContext::BEFORE)
+      $this->currentContext->getMiddlewares(RoutingContext::BEFORE)
     )($request);
-
-    $uri  = $request->getUri();
-    $host = $context->getHost();
-
-    // Early return if context host does not match the request host
-    if ($host && strcasecmp($host, $uri->getHost()) == 0) {
-      return null;
-    }
-
-    $path   = $uri->getPath();
-    $prefix = $context->getPrefixedPath();
-
-    // Early return if context prefix does not match the request path
-    if ($prefix && strpos($path, $prefix) !== 0) {
-      return null;
-    }
 
 
     $subContexts = $this->currentContext->getSubContexts();
@@ -516,6 +516,8 @@ class Router {
   
   public function handle(Request $request) : ResponseInterface
   {
+    // Reset current context to root context
+    $this->currentContext = $this->rootContext;
     if (!$result = $this->handleContext($request, $this->rootContext, true)) {
       throw new HttpException(404);
     }
