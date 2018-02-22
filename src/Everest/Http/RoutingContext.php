@@ -218,7 +218,7 @@ class RoutingContext {
   public function addMiddleware(callable $middleware, string $type = self::BEFORE)
   {
     $type = self::validateMiddlewareType($type);
-    $this->middlewares[$type][] = $middleware;
+    array_unshift($this->middlewares[$type], $middleware);
   }
 
 
@@ -238,9 +238,9 @@ class RoutingContext {
     $type = self::validateMiddlewareType($type);
     $middlewares = array_merge($middlewares, $this->middlewares[$type]);
 
-    return $this->parent ? 
-      $this->parent->getMiddlewares($middlewares, $type) :
-      $middlewares;
+    return $this->parent 
+      ? $this->parent->getMiddlewares($middlewares, $type) 
+      : array_reverse($middlewares);
   }
 
 

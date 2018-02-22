@@ -152,7 +152,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
         $router
           // Sub context middleware
           ->before(new Middleware('arg2'))
-          ->get('test', function(ServerRequest $request, $arg2, $arg1) {
+          ->get('test', function(ServerRequest $request, $arg1, $arg2) {
               $this->assertEquals('arg1', $arg1);
               $this->assertEquals('arg2', $arg2);
 
