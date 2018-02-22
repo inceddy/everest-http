@@ -2,7 +2,7 @@
     "name": "everest/http",
     "description": "Everest - HTTP Component",
     "license": "MIT",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "authors": [
         {
             "name": "Philipp Steingrebe",
