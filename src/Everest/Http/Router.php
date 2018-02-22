@@ -488,7 +488,7 @@ class Router {
     // Use context default handler to handle errors occured
     if ($defaultHandler = $this->currentContext->getDefault()) {
       return $composedMiddlewareAfter([$this, 'resultToResponse'])(
-        $composedMiddlewareBefore($defaultHandler)($processedRequest, $request)
+        call_user_func($defaultHandler, $processedRequest, $request, ... $beforeMiddlewareResult)
       );
     }
 
