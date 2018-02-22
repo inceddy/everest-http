@@ -331,26 +331,19 @@ class Router {
   {
     $curryedMiddlewares = array_map(function($middleware) {
       return function ($next) use ($middleware) {
-        return function (...$args) use ($middleware, $next) {
-          return call_user_func($middleware, $next, ...$args);
+        return function ($request) use ($middleware, $next) {
+          return call_user_func($middleware, $next, $request);
         };
       };
     }, array_reverse($middlewares));
 
-    return function ($handler = null) use ($curryedMiddlewares) {
-      $handler = $handler 
-        ? function(...$args) use ($handler) {
-          return call_user_func_array($handler, $args);
-        }
-        : function(...$args) {
-          return $args;
-        };
-      return array_reduce($curryedMiddlewares, function($state, $middleware){
-        return function(...$args) use($state, $middleware) {
-          return $middleware($state)(...$args);
-        };
-      }, $handler);
-    };
+    return array_reduce($curryedMiddlewares, function($state, $middleware){
+      return function($request) use ($state, $middleware) {
+        return $middleware($state)($request);
+      };
+    }, function($request) {
+      return $request;
+    });
   }
 
   /**
@@ -411,6 +404,23 @@ class Router {
 
   private function handleContext(ServerRequest $request, RoutingContext $context, bool $isRoot = false) :? Response
   {
+    // Cache ref on orginal request
+    $orgRequest = $request;
+
+    // Save current context to restore it after this context is handled
+    $prevContext = $this->currentContext;
+
+    // Set new current context and invoke it
+    $this->currentContext = $context;
+
+    // Invoke context
+    $context($this);
+
+    // Compose before middlewares
+    $request = $this->composeMiddleware(
+      $context->getMiddlewares(RoutingContext::BEFORE)
+    )($request);
+
     $uri  = $request->getUri();
     $host = $context->getHost();
 
@@ -426,13 +436,6 @@ class Router {
     if ($prefix && strpos($path, $prefix) !== 0) {
       return null;
     }
-
-    // Save current context to restore it after this context is handled
-    $prevContext = $this->currentContext;
-
-    // Set new current context and invoke it
-    $this->currentContext = $context;
-    $context($this);
 
 
     $subContexts = $this->currentContext->getSubContexts();
@@ -452,17 +455,10 @@ class Router {
       throw new \LogicException('Context without subcontext and routes found');
     }
 
-    // Compose middlewares
-    $composedMiddlewareBefore = $this->composeMiddleware(
-      $this->currentContext->getMiddlewares([], RoutingContext::BEFORE)
-    );
-
+    // Compose after middlewares
     $composedMiddlewareAfter = $this->composeMiddleware(
-      $this->currentContext->getMiddlewares([], RoutingContext::AFTER)
+      $this->currentContext->getMiddlewares(RoutingContext::AFTER)
     );
-
-    $beforeMiddlewareResult = $composedMiddlewareBefore(null)($request);
-    $processedRequest = array_shift($beforeMiddlewareResult);
 
     // Handle routes
     foreach ($routes as $routeAndHandler) {
@@ -474,7 +470,7 @@ class Router {
       // Execute route handler and before middleware
       //$result = $composedMiddlewareBefore($handler)($request, $route);
 
-      $result = $this->handleRoute($route, $handler, $processedRequest, ... $beforeMiddlewareResult);
+      $result = $this->handleRoute($route, $handler, $request);
 
       // Call next handler if `null` was returned
       if (null === $result) {
@@ -482,13 +478,19 @@ class Router {
       }
 
       // Execute result handler and after middleware
-      return $composedMiddlewareAfter([$this, 'resultToResponse'])($result);
+      return $composedMiddlewareAfter(
+        $this->resultToResponse($result)
+      );
     }
 
     // Use context default handler to handle errors occured
     if ($defaultHandler = $this->currentContext->getDefault()) {
-      return $composedMiddlewareAfter([$this, 'resultToResponse'])(
-        call_user_func($defaultHandler, $processedRequest, $request, ... $beforeMiddlewareResult)
+      return $composedMiddlewareAfter(
+        $this->resultToResponse(call_user_func(
+          $defaultHandler, 
+          $request, 
+          $orgRequest
+        ))
       );
     }
 

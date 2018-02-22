@@ -122,16 +122,16 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
     $router
       // Closure middleware
       ->before(function(Closure $next, ServerRequest $request) {
-        return $next($request, 'A');
+        return $next($request->withAttribute('attr1', 1));
       })
       // Object middleware
-      ->before(new Middleware('B'))
+      ->before(new Middleware('attr2', 2))
       ->after(function(Closure $next, $response){
-        return $next($response . 'After');
+        return $response->withHeader('test', 'value');
       })
-      ->get('prefix/test', function(ServerRequest $request, $add1, $add2) {
-        $this->assertEquals('A', $add1);
-        $this->assertEquals('B', $add2);
+      ->get('prefix/test', function(ServerRequest $request) {
+        $this->assertSame(1, $request->getAttribute('attr1'));
+        $this->assertSame(2, $request->getAttribute('attr2'));
         $this->assertEquals([], $request->getAttribute('parameter'));
 
         return 'Response';
@@ -139,7 +139,7 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
       ->handle($this->request);
 
       $this->assertInstanceOf(ResponseInterface::CLASS, $result);
-      $this->assertSame('ResponseAfter', (string)$result->getBody());
+      $this->assertSame('value', $result->getHeaderLine('test'));
   }
 
   public function testNestedMiddleware()
@@ -147,15 +147,35 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
     $router = new Router;
     $router
       // Root context middleware
-      ->before(new Middleware('arg1'))
+      ->before(new Middleware('attr1', 1))
       ->context('prefix', function(Router $router) {
         $router
           // Sub context middleware
-          ->before(new Middleware('arg2'))
-          ->get('test', function(ServerRequest $request, $arg1, $arg2) {
-              $this->assertEquals('arg1', $arg1);
-              $this->assertEquals('arg2', $arg2);
+          ->before(new Middleware('attr2', 2))
+          ->get('{var}', function(ServerRequest $request) {
+              $this->assertSame('test', $request->getAttribute('var'));
+              $this->assertSame(1, $request->getAttribute('attr1'));
+              $this->assertSame(2, $request->getAttribute('attr2'));
 
+              return 'Middleware Response!';
+          });
+      })
+      ->handle($this->request);
+  }
+
+  public function testModifingNestedMiddleware()
+  {
+    $router = new Router;
+    $router
+      // Root context middleware
+      ->before(function($next, $request){
+        $uri = $request->getUri()->withPath('prefix/test-mod');
+        return $next($request->withUri($uri));
+      })
+      ->context('prefix', function(Router $router) {
+        $router
+          ->get('{var}', function(ServerRequest $request) {
+              $this->assertSame('test-mod', $request->getAttribute('var'));
               return 'Middleware Response!';
           });
       })

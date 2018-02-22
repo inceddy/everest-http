@@ -3,16 +3,20 @@ use Everest\Http\Requests\ServerRequest;
 
 class Middleware {
 
-	private $extraArgument;
+	private $attributeName;
+	private $attributeValue;
 
-	public function __construct($extraArgument)
+	public function __construct(string $attributeName, $attributeValue)
 	{
-		$this->extraArgument = $extraArgument;
+		$this->attributeName  = $attributeName;
+		$this->attributeValue = $attributeValue;
 	}
 
-	public function __invoke(Closure $next, ServerRequest $request, ...$args)
+	public function __invoke(Closure $next, ServerRequest $request)
 	{
-		array_push($args, $this->extraArgument);
-		return $next($request, ... $args);
+		return $next($request->withAttribute(
+			$this->attributeName,
+			$this->attributeValue
+		));
 	}
 }
