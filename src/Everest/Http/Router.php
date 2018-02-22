@@ -383,7 +383,7 @@ class Router {
     }
   }
 
-  private function handleRoute(Route $route, $handler, ServerRequest $request, ... $args)
+  private function handleRoute(Route $route, callable $handler, ServerRequest $request, ... $args)
   {
     // Test for method (eg. HTTP_GET, HTTP_POST, ...)
     if (!$request->isMethod($route->getMethods())) {
@@ -462,6 +462,7 @@ class Router {
     );
 
     $beforeMiddlewareResult = $composedMiddlewareBefore(null)($request);
+    $processedRequest = array_shift($beforeMiddlewareResult);
 
     // Handle routes
     foreach ($routes as $routeAndHandler) {
@@ -473,7 +474,7 @@ class Router {
       // Execute route handler and before middleware
       //$result = $composedMiddlewareBefore($handler)($request, $route);
 
-      $result = $this->handleRoute($route, $handler, ... $beforeMiddlewareResult);
+      $result = $this->handleRoute($route, $handler, $processedRequest, ... $beforeMiddlewareResult);
 
       // Call next handler if `null` was returned
       if (null === $result) {
@@ -487,7 +488,7 @@ class Router {
     // Use context default handler to handle errors occured
     if ($defaultHandler = $this->currentContext->getDefault()) {
       return $composedMiddlewareAfter([$this, 'resultToResponse'])(
-        $composedMiddlewareBefore($defaultHandler)($request)
+        $composedMiddlewareBefore($defaultHandler)($processedRequest, $request)
       );
     }
 
