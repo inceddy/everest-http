@@ -459,7 +459,7 @@ class Uri {
 
   public function withQueryArray(array $query, bool $merge = false) : Uri
   {
-    if (empty(array_diff($query, $this->query))) {
+    if (empty(array_diff_assoc($query, $this->query))) {
       return $this;
     }
 
