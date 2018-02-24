@@ -24,6 +24,14 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
     );
   }
 
+  public function getRequest(string $uri, int $methods = null)
+  {
+    return new ServerRequest(
+      $methods ?? ServerRequest::HTTP_ALL, 
+      Uri::from($uri)
+    );
+  }
+
   /**
    * @expectedException        \Everest\Http\HttpException
    * @expectedExceptionCode 404
@@ -218,5 +226,25 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
 
     $this->assertInstanceOf(ResponseInterface::CLASS, $response);
     $this->assertSame('not-empty-result', (string)$response->getBody());
+  }
+
+
+  public function testBeforeMiddlewareMustReturnResponseOrRequest() {
+    $this->expectException(\RuntimeException::CLASS);
+    $router = (new Router)
+      ->before(function(){
+        return 'string';
+      })
+      ->handle($this->request);
+  }
+
+  public function testBeforeMiddlewareReturningResponse() {
+    $result = $router = (new Router)
+      ->before(function(){
+        return new Response('content');
+      })
+      ->handle($this->request);
+
+    $this->assertSame('content', $result->getBody()->getContents());
   }
 }
