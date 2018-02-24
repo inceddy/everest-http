@@ -3,23 +3,23 @@
 /*
  * This file is part of Everest.
  *
- * (c) 2017 Philipp Steingrebe <development@steingrebe.de>
+ * (c) 2018 Philipp Steingrebe <development@steingrebe.de>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
 namespace Everest\Http;
+
 use Everest\Http\Responses\ResponseInterface;
 use Everest\Http\Responses\Response;
 use Everest\Http\Responses\JsonResponse;
 use Everest\Http\Responses\RedirectResponse;
+
+use Everest\Http\Requests\RequestInterface;
 use Everest\Http\Requests\Request;
 use Everest\Http\Requests\ServerRequest;
 
-use InvalidArgumentException;
-use Exception;
-use Closure;
 
 /**
  * Class for routing http requests
@@ -84,8 +84,8 @@ class Router {
   
   public function context(string $prefix, $invoker) {
 
-    if (!$invoker instanceof Closure) {
-      throw new InvalidArgumentException('Context invoker must be instance of Closure.');
+    if (!$invoker instanceof \Closure) {
+      throw new \InvalidArgumentException('Context invoker must be instance of Closure.');
     }
 
     $this->currentContext->addSubContext($prefix, $invoker);
@@ -163,7 +163,7 @@ class Router {
   public function route(Route $route, $handler) 
   {
     if (!is_callable($handler)) {
-      throw new Exception('Route handler must be callable.');
+      throw new \InvalidArgumentException('Route handler must be callable.');
     }
 
     $this->currentContext->addRoute($route, $handler);
@@ -330,19 +330,19 @@ class Router {
   private function composeMiddleware(array $middlewares)
   {
     $curryedMiddlewares = array_map(function($middleware) {
-      return function ($next) use ($middleware) {
-        return function ($request) use ($middleware, $next) {
-          return call_user_func($middleware, $next, $request);
+      return function (\Closure $next) use ($middleware) {
+        return function (MessageInterface $requestOrResponse) use ($middleware, $next) {
+          return call_user_func($middleware, $next, $requestOrResponse);
         };
       };
     }, array_reverse($middlewares));
 
     return array_reduce($curryedMiddlewares, function($state, $middleware){
-      return function($request) use ($state, $middleware) {
-        return $middleware($state)($request);
+      return function(MessageInterface $requestOrResponse) use ($state, $middleware) {
+        return $middleware($state)($requestOrResponse);
       };
-    }, function($request) {
-      return $request;
+    }, function($requestOrResponse) {
+      return $requestOrResponse;
     });
   }
 
@@ -372,7 +372,7 @@ class Router {
       case is_array($result) || is_object($result):
         return new JsonResponse($result);
       default:
-        throw new Exception('Invalid route handler return value');
+        throw new \InvalidArgumentException('Invalid route handler return value');
     }
   }
 
@@ -433,9 +433,28 @@ class Router {
     $orgRequest = $request;
 
     // Compose before middlewares
-    $request = $this->composeMiddleware(
+    $beforeResult = $this->composeMiddleware(
       $this->currentContext->getMiddlewares(RoutingContext::BEFORE)
     )($request);
+
+    // Handle middleware result
+    if ($beforeResult instanceof Responses\ResponseInterface) {
+      return $beforeResult;
+    }
+    else if ($beforeResult instanceof Requests\RequestInterface) {
+      $request = $beforeResult;
+    }
+    else {
+      throw new \RuntimeException(sprintf(
+        'Expected before-middleware to return %s or %s but %s was returned.',
+        Responses\ResponseInterface::CLASS,
+        Requests\RequestInterface::CLASS,
+        is_object($beforeResult) 
+          ? get_class($beforeResult)
+          : gettype($beforeResult)
+      ));
+      
+    }
 
 
     $subContexts = $this->currentContext->getSubContexts();
