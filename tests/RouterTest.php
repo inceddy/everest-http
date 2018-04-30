@@ -76,6 +76,16 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
     })->handle($this->request);
   }
 
+  public function testRoutingPatch()
+  {
+    $test = $this;
+    $router = new Router;
+    $router->patch('prefix/test', function() use ($test) {
+      $test->assertTrue(true);
+      return 'Response!';
+    })->handle($this->request);
+  }
+
   public function testContext()
   {
     $test = $this;
