@@ -36,7 +36,7 @@ interface MessageInterface {
    * The http request methods bit-encoded
    */
   
-  public const HTTP_ALL     = 0xFF;
+  public const HTTP_ALL     = 0xFFF;
 
   public const HTTP_GET     = 0x001;
   public const HTTP_POST    = 0x002;
