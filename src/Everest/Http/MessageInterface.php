@@ -38,14 +38,15 @@ interface MessageInterface {
   
   public const HTTP_ALL     = 0xFF;
 
-  public const HTTP_GET     = 0x01;
-  public const HTTP_POST    = 0x02;
-  public const HTTP_HEAD    = 0x04;
-  public const HTTP_PUT     = 0x08;
-  public const HTTP_DELETE  = 0x10;
-  public const HTTP_TRACE   = 0x20;
-  public const HTTP_OPTIONS = 0x40;
-  public const HTTP_CONNECT = 0x80;
+  public const HTTP_GET     = 0x001;
+  public const HTTP_POST    = 0x002;
+  public const HTTP_HEAD    = 0x004;
+  public const HTTP_PUT     = 0x008;
+  public const HTTP_DELETE  = 0x010;
+  public const HTTP_TRACE   = 0x020;
+  public const HTTP_OPTIONS = 0x040;
+  public const HTTP_CONNECT = 0x080;
+  public const HTTP_PATCH   = 0x100;
 
 
   /**
@@ -62,6 +63,7 @@ interface MessageInterface {
     self::HTTP_TRACE   => 'TRACE',
     self::HTTP_OPTIONS => 'OPTIONS',
     self::HTTP_CONNECT => 'CONNECT',
-    self::HTTP_ALL     => 'ALL'
+    self::HTTP_ALL     => 'ALL',
+    self::HTTP_PATCH   => 'PATCH'
   ];
 }
