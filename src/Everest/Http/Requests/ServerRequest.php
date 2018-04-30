@@ -298,13 +298,22 @@ class ServerRequest extends Request implements RequestInterface {
       
       $serverRequest = new ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
 
-      $contentType = $serverRequest->getHeader('Content-Type');
+      $contentType = $serverRequest->getHeaderLine('Content-Type');
 
-      if (!empty($contentType) && stripos($contentType[0], 'application/json')) {
+      if ($method === 'POST' && (
+        false !== stripos($contentType, 'application/x-www-form-urlencoded') ||
+        false !== stripos($contentType, 'multipart/form-data')
+      )) {
+        $parsedBody = $_POST;
+      }
+
+      else if (false !== stripos($contentType, 'application/json')) {
         $parsedBody = json_decode($body->getContents(), true);
       }
+
       else {
-        $parsedBody = $_POST;
+        $parsedBody = [];
+        parse_str($body->getContents(), $parsedBody);
       }
 
       $instance = $serverRequest
