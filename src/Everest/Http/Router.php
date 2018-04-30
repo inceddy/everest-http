@@ -247,6 +247,24 @@ class Router {
 
   /**
    * Adds a new route with given path to the current context
+   * that accepts PATCH requests.
+   *
+   * @param string $path
+   *    The route path
+   * @param callable $handler
+   *    The route handler
+   *
+   * @return self
+   */
+
+  public function patch(string $path, $handler)
+  {
+    return $this->request($path, Request::HTTP_PATCH, $handler);
+  }
+
+
+  /**
+   * Adds a new route with given path to the current context
    * that accepts DELETE requests.
    *
    * @param string $path
