@@ -4,6 +4,7 @@ use Everest\Http\Requests\Request;
 use Everest\Http\Requests\ServerRequest;
 use Everest\Http\UploadedFile;
 use Everest\Http\Uri;
+use Everest\Http\Stream;
 use Everest\Http\Tests\WebTestCase;
 
 /**
@@ -74,12 +75,12 @@ class ServerRequestTest extends WebTestCase {
 			Uri::from('localhost')
 		);
 
-		// Collection MUST be initially unset
-		$this->assertNull($request->parsedBody);
+		// Collection MUST be initially false
+		$this->assertFalse($request->parsedBody);
 
-		// Initially MUST return empty array
+		// Initially MUST return null if theres nothing to parse
 		$bodyParams = $request->getParsedBody();
-		$this->assertTrue(is_array($bodyParams) && empty($bodyParams));
+		$this->assertNull($bodyParams);
 
 		// Unset names MUST return null if no default is set
 		$this->assertNull($request->getBodyParam('unsetkey'));
@@ -186,5 +187,48 @@ class ServerRequestTest extends WebTestCase {
 
 		$this->assertFalse($request->isMethod('POST'));
 		$this->assertFalse($request->isMethod(ServerRequest::HTTP_POST));
+	}
+
+	public function testJsonBodyParser() {
+		$request = ServerRequest::fromGlobals()
+			->withHeader('Content-Type', 'application/json')
+			->withBody(Stream::from(json_encode([
+				'a' => true,
+				'b' => []
+			])));
+
+		$this->assertSame(['a' => true, 'b' => []], $request->getParsedBody());
+	}
+
+	public function testXmlBodyParser() {
+		$request = ServerRequest::fromGlobals()
+			->withHeader('Content-Type', 'application/xml')
+			->withBody(Stream::from('<?xml version="1.0" encoding="UTF-8"?>
+<test>
+  <a>1</a>
+  <b>2</b>
+</test>'));
+
+		$this->assertInstanceOf(\SimpleXMLElement::CLASS, $request->getParsedBody());
+	}
+
+	public function testXml2BodyParser() {
+		$request = ServerRequest::fromGlobals()
+			->withHeader('Content-Type', 'text/xml')
+			->withBody(Stream::from('<?xml version="1.0" encoding="UTF-8"?>
+<test>
+  <a>1</a>
+  <b>2</b>
+</test>'));
+
+		$this->assertInstanceOf(\SimpleXMLElement::CLASS, $request->getParsedBody());
+	}
+
+	public function testUrlEncodedBodyParser() {
+		$request = ServerRequest::fromGlobals()
+			->withHeader('Content-Type', 'application/x-www-form-urlencoded')
+			->withBody(Stream::from('first=value&arr[]=foo+bar&arr[]=baz'));
+
+		$this->assertSame(['first' => 'value', 'arr' => ['foo bar', 'baz']], $request->getParsedBody());
 	}
 }

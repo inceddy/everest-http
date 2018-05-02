@@ -24,6 +24,13 @@ use Everest\Http\Collections\CookieCollectionInterface;
 class ServerRequest extends Request implements RequestInterface {
 
   /**
+   * Array of parsers for different body content types
+   * @var array<Closure>
+   */
+  
+  protected static $bodyParsers = [];
+
+  /**
    * The ParameterCollection of the super global $_GET
    * @var Everest\Http\ParameterCollectionInterface
    */
@@ -36,7 +43,7 @@ class ServerRequest extends Request implements RequestInterface {
    * @var Everest\Http\ParameterCollectionInterface
    */
 
-  public $parsedBody;
+  public $parsedBody = false;
 
   /**
    * The ParameterCollection of the super global $_FILES
@@ -62,6 +69,11 @@ class ServerRequest extends Request implements RequestInterface {
   public $cookie;
 
   private $attributes;
+
+  public static function addBodyParser(string $mediaType, callable $parser)
+  {
+    self::$bodyParsers[strtolower($mediaType)] = $parser;
+  }
 
   public static function getUriFromGlobals() : Uri
   {
@@ -252,6 +264,41 @@ class ServerRequest extends Request implements RequestInterface {
     return $normalizedFiles;
   }
 
+  /**
+   * Creates a new request with the default super global parameters of PHP.
+   *
+   * @return Everest\Http\Request
+   */
+  
+  public static function fromGlobals()
+  {
+    static $instance;
+
+    if (!isset($instance)) {
+
+      $method   = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+      $headers  = function_exists('getallheaders') ? getallheaders() : [];
+      $uri      = self::getUriFromGlobals();
+      $body     = Stream::from(fopen('php://input', 'r+'));
+      $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
+      
+      $instance = (new ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER))
+        ->withCookieParams($_COOKIE)
+        ->withQueryParams($_GET)
+        ->withUploadedFiles($_FILES);
+
+      $contentType = $instance->getContentType();
+      if ($method === 'POST' && (
+        false !== stripos($contentType, 'application/x-www-form-urlencoded') ||
+        false !== stripos($contentType, 'multipart/form-data')
+      )) {
+        $instance = $instance->withParsedBody($_POST);
+      }
+    }
+
+    return $instance;
+  }
+
 
   /**
    * Creates a new request with the default super global parameters of PHP.
@@ -276,58 +323,49 @@ class ServerRequest extends Request implements RequestInterface {
     $this->attributes = [];
   }
 
-
-  /**
-   * Creates a new request with the default super global parameters of PHP.
-   *
-   * @return Everest\Http\Request
-   * 
-   */
-  
-  public static function fromGlobals()
+  public function getContentType() :? string
   {
-    static $instance;
+    return $this->getHeader('Content-Type')[0] ?? null;
+  }
 
-    if (!isset($instance)) {
-
-      $method   = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-      $headers  = function_exists('getallheaders') ? getallheaders() : [];
-      $uri      = self::getUriFromGlobals();
-      $body     = Stream::from(fopen('php://input', 'r+'));
-      $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
-      
-      $serverRequest = new ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
-
-      $contentType = $serverRequest->getHeaderLine('Content-Type');
-
-      if ($method === 'POST' && (
-        false !== stripos($contentType, 'application/x-www-form-urlencoded') ||
-        false !== stripos($contentType, 'multipart/form-data')
-      )) {
-        $parsedBody = $_POST;
-      }
-
-      else if (false !== stripos($contentType, 'application/json')) {
-        $parsedBody = json_decode($body->getContents(), true);
-      }
-
-      else {
-        $parsedBody = [];
-        parse_str($body->getContents(), $parsedBody);
-      }
-
-      $instance = $serverRequest
-        ->withCookieParams($_COOKIE)
-        ->withQueryParams($_GET)
-        ->withParsedBody($parsedBody)
-        ->withUploadedFiles($_FILES);
+  public function getMediaType() :? string
+  {
+    if (!$contentType = $this->getContentType()) {
+      return null;
     }
 
-    return $instance;
+    return strtolower(preg_split('/\s*[;,]\s*/', $contentType)[0]);
+  }
+
+  public function getMediaTypeParams() : array
+  {
+    $result = [];
+
+    if (!$contentType = $this->getContentType()) {
+      return $result;
+    }
+
+    foreach (preg_split('/\s*[;,]\s*/', $contentType) as $part) {
+      [$name, $value] = explode('=', $part);
+      $result[strtolower($name)] = $value;
+    }
+
+    return $result;
+  }
+
+  public function getContentCharset() :? string
+  {
+    foreach ($this->getMediaTypeParams() as $name => $value) {
+      if ($name === 'charset') {
+        return $value;
+      }
+    }
+
+    return null;
   }
 
 
-/**
+  /**
    * Shortcut to fetch a GET-parameter with optional default value  
    *
    * @param string $key  
@@ -375,9 +413,11 @@ class ServerRequest extends Request implements RequestInterface {
 
   public function getBodyParam(string $key, $default = null) 
   {
-    return $this->parsedBody && $this->parsedBody->has($key) ? 
-           $this->parsedBody->get($key) : 
-           $default;
+    if (is_array($this->parsedBody) || $this->parsedBody instanceof \ArrayAccess) {
+      return $this->parsedBody[$key] ?? $default;
+    }
+
+    return $default;
   }
 
 
@@ -387,15 +427,43 @@ class ServerRequest extends Request implements RequestInterface {
   
   public function getParsedBody()
   {
-    return $this->parsedBody ? 
-           $this->parsedBody->toArray() : 
-           [];
+    if (false !== $this->parsedBody) {
+      return $this->parsedBody;
+    }
+
+    if (!$mediaType = $this->getMediaType()) {
+      return $this->parsedBody = null;
+    }
+
+    $parts = explode('+', $mediaType);
+    if (count($parts) >= 2) {
+        $mediaType = 'application/' . $parts[count($parts)-1];
+    }
+
+    if (isset(self::$bodyParsers[$mediaType]) === true) {
+      $body = $this->body->getContents();
+      $parsed = call_user_func(self::$bodyParsers[$mediaType], $body);
+
+      if (!is_null($parsed) && !is_object($parsed) && !is_array($parsed)) {
+        throw new RuntimeException(
+          'Request body parser return value must be an array, an object, or null'
+        );
+      }
+
+      return $this->parsedBody = $parsed;
+    }
+
+    return null;
   }
 
-  public function withParsedBody(array $parsedBody)
+  public function withParsedBody($parsedBody)
   {
+    if (!is_null($parsedBody) && !is_object($parsedBody) && !is_array($parsedBody)) {
+      throw new \InvalidArgumentException('Parsed body must be an array, an object, or null');
+    }
+
     $new = clone $this;
-    $new->parsedBody = new ParameterCollection($parsedBody);
+    $new->parsedBody = $parsedBody;
 
     return $new;
   }
@@ -578,3 +646,37 @@ class ServerRequest extends Request implements RequestInterface {
     return $new;
   }
 }
+
+// Define default body parsers
+
+$xmlParser = function ($body) {
+  $backup = libxml_disable_entity_loader(true);
+  $backup_errors = libxml_use_internal_errors(true);
+
+  $xml = simplexml_load_string($body);
+  libxml_disable_entity_loader($backup);
+  libxml_clear_errors();
+  libxml_use_internal_errors($backup_errors);
+  if ($xml === false) {
+    return null;
+  }
+  return $xml;
+};
+
+ServerRequest::addBodyParser('application/xml', $xmlParser);
+
+ServerRequest::addBodyParser('text/xml', $xmlParser);
+
+ServerRequest::addBodyParser('application/json', function($body){
+  $json = json_decode($body, true);
+  if (!is_array($json)) {
+    return null;
+  }
+  return $json;
+});
+
+ServerRequest::addBodyParser('application/x-www-form-urlencoded', function ($body) {
+  $data = [];
+  parse_str($body, $data);
+  return $data;
+});
