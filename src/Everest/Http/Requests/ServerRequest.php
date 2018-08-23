@@ -521,7 +521,7 @@ class ServerRequest extends Request implements RequestInterface {
     $new = clone $this;
     $new->cookie = new ParameterCollection($cookieParams);
 
-    return $this;
+    return $new;
   }
 
 
