@@ -18,7 +18,7 @@ use InvalidArgumentException;
  * @package Everest\Http
  */
 
-class Uri {
+class Uri implements \ArrayAccess {
 
   private const PORT_SCHEME_MAP = [
     21  => 'ftp',
@@ -593,5 +593,49 @@ class Uri {
   public function __toString()
   {
     return $this->toString();
+  }
+
+
+  /**
+   * {@inheritDoc}
+   */
+  
+  public function offsetExists($offset)
+  {
+    return isset($this->path[$offset]);
+  }
+
+
+  /**
+   * {@inheritDoc}
+   */
+
+  public function offsetGet($offset)
+  {
+    return $this->path[$offset] ?? null;
+  }
+
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws BadMethodCallException if called
+   */
+
+  public function offsetSet($offset, $value)
+  {
+    throw new \BadMethodCallException('Not implemented');
+  }
+
+
+  /**
+   * {@inheritDoc}
+   *
+   * @throws BadMethodCallException if called
+   */
+
+  public function offsetUnset($offset)
+  {
+    throw new \BadMethodCallException('Not implemented');
   }
 }

@@ -248,4 +248,35 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 			Uri::from('http://test.de')->equals(Uri::from('http://test.de'))
 		);
 	}
+
+	public function testArrayAccess()
+	{
+		$uri = Uri::from('http://test.de/a/b/c');
+
+		$this->assertSame('a', $uri[0]);
+		$this->assertNull($uri[3]);
+
+		$this->assertTrue(isset($uri[0]));
+		$this->assertFalse(isset($uri[3]));
+	}
+
+	/**
+	 * @expectedException BadMethodCallException
+	 */
+	
+	public function testArrayAccessOffsetSet()
+	{
+		$uri = Uri::from('http://test.de/a/b/c');
+		$uri[0] = 'foo';
+	}
+
+	/**
+	 * @expectedException BadMethodCallException
+	 */
+	
+	public function testArrayAccessOffsetUnset()
+	{
+		$uri = Uri::from('http://test.de/a/b/c');
+		unset($uri[0]);
+	}
 }
