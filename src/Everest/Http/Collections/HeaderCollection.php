@@ -36,7 +36,7 @@ class HeaderCollection implements
         return array_filter(array_map('trim', $value));
     }
 
-    throw new InvalidArgumentException(sprintf(
+    throw new \InvalidArgumentException(sprintf(
       'Header must be type of string or array but %s given.', 
       is_object($value) ? get_class($value) : gettype($value)
     ));
@@ -58,7 +58,7 @@ class HeaderCollection implements
   private static function normalizeHeaderName(string $name) : string
   {
     if (0 === preg_match('/^[^\x00-\x1F :]+$/', $name)) {
-      throw new InvalidArgumentException(sprintf(
+      throw new \InvalidArgumentException(sprintf(
         '%s is not a valid header name.', 
         $name
       ));
