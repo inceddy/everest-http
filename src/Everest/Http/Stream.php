@@ -32,6 +32,11 @@ class Stream
       case $content instanceof Stream:
         return $content;
 
+      // File
+      case is_string($content) && @file_exists($content) && @is_readable($content):
+        $resource = fopen($content, 'r+');
+        return new self($resource, $options);
+
       // Scalar 
       case is_scalar($content):
       case is_null($content):
