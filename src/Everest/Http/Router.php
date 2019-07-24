@@ -334,6 +334,25 @@ class Router {
     return $this;
   }
 
+
+  /**
+   * Sets a error handler that is used if an
+   * error is thrown during route handling
+   *
+   * @param  callable $errorHandler 
+   *    The handler
+   *
+   * @return self
+   * 
+   */
+
+  public function error($errorHandler)
+  {
+    $this->currentContext->setError($errorHandler);
+    return $this;
+  }
+
+
   /**
    * Get a chain of middlewares that pre process 
    * arguments before entering the current route handler
@@ -474,61 +493,72 @@ class Router {
       
     }
 
+    try {
 
-    $subContexts = $this->currentContext->getSubContexts();
+      $subContexts = $this->currentContext->getSubContexts();
 
-
-    // Check if any sub context wants to handle the request 
-    foreach ($subContexts as $subContext) {
-      if ($subResult = $this->handleContext($request, $subContext)) {
-        return $subResult;
-      }
-    }
-
-    // Context routes
-    $routes = $this->currentContext->getRoutes();
-
-    if (empty($subContexts) && empty($routes) && !$isRoot) {
-      throw new \LogicException('Context without subcontext and routes found');
-    }
-
-    // Compose after middlewares
-    $composedMiddlewareAfter = $this->composeMiddleware(
-      $this->currentContext->getMiddlewares(RoutingContext::AFTER)
-    );
-
-    // Handle routes
-    foreach ($routes as $routeAndHandler) {
-      [$route, $handler] = $routeAndHandler;
-
-      // Prefix route with current context prefix
-      $route->setPrefix($prefix);
-      
-      // Execute route handler and before middleware
-      //$result = $composedMiddlewareBefore($handler)($request, $route);
-
-      $result = $this->handleRoute($route, $handler, $request);
-
-      // Call next handler if `null` was returned
-      if (null === $result) {
-        continue;
+      // Check if any sub context wants to handle the request 
+      foreach ($subContexts as $subContext) {
+        if ($subResult = $this->handleContext($request, $subContext)) {
+          return $subResult;
+        }
       }
 
-      // Execute result handler and after middleware
-      return $composedMiddlewareAfter(
-        $this->resultToResponse($result)
-      );
-    }
+      // Context routes
+      $routes = $this->currentContext->getRoutes();
 
-    // Use context default handler to handle errors occured
-    if ($defaultHandler = $this->currentContext->getDefault()) {
-      return $composedMiddlewareAfter(
-        $this->resultToResponse(call_user_func(
-          $defaultHandler, 
-          $request, 
-          $orgRequest
-        ))
+      if (empty($subContexts) && empty($routes) && !$isRoot) {
+        throw new \LogicException('Context without subcontext and routes found');
+      }
+
+      // Compose after middlewares
+      $composedMiddlewareAfter = $this->composeMiddleware(
+        $this->currentContext->getMiddlewares(RoutingContext::AFTER)
       );
+
+
+      // Handle routes
+      foreach ($routes as $routeAndHandler) {
+        [$route, $handler] = $routeAndHandler;
+
+        // Prefix route with current context prefix
+        $route->setPrefix($prefix);
+        
+        // Execute route handler and before middleware
+        //$result = $composedMiddlewareBefore($handler)($request, $route);
+
+        $result = $this->handleRoute($route, $handler, $request);
+
+        // Call next handler if `null` was returned
+        if (null === $result) {
+          continue;
+        }
+
+        // Execute result handler and after middleware
+        return $composedMiddlewareAfter(
+          $this->resultToResponse($result)
+        );
+      }
+
+      // Use context default handler to handle errors occured
+      if ($defaultHandler = $this->currentContext->getDefault()) {
+        return $composedMiddlewareAfter(
+          $this->resultToResponse(call_user_func(
+            $defaultHandler, 
+            $request, 
+            $orgRequest
+          ))
+        );
+      }
+    }
+    catch (\Exception $error) {
+      if ($errorHandler = $context->getError()) {
+        return $this->resultToResponse(call_user_func(
+          $errorHandler,
+          $error,
+          $request
+        ));
+      }
     }
 
     // Restore context

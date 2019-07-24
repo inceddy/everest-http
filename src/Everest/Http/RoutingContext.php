@@ -120,10 +120,21 @@ class RoutingContext {
    * These handler get's called when an error
    * is thrown during the handling of this 
    * context.
-   * @var callable
+   * @var callable|null
    */
   
   private $default;
+
+
+  /**
+   * The error handler for this context.
+   * These handler get's called when an error
+   * is thrown during the handling of this 
+   * context.
+   * @var callable
+   */
+
+  private $error;
 
 
   /**
@@ -356,6 +367,35 @@ class RoutingContext {
   public function getDefault()
   {
     return $this->default;
+  }
+
+
+  /**
+   * Sets the error handler for this context
+   *
+   * @param callable $errorHandler
+   *    The error handler
+   *
+   * @return void
+   */
+
+  public function setError(callable $errorHandler)
+  {
+    $this->error = $errorHandler;
+  }
+
+
+  /**
+   * Gets the error handler for this context or null
+   * if none is set
+   *
+   * @return callable|null
+   *    The error handler or null
+   */
+
+  public function getError()
+  {
+    return $this->error;
   }
 
 

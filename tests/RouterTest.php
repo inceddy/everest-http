@@ -257,4 +257,49 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
 
     $this->assertSame('content', $result->getBody()->getContents());
   }
+
+  public function testErrorHandling() {
+    $message = '';
+
+    (new Router)
+      ->get('prefix/test', function(){
+        throw new \Exception('error');
+      })
+      ->error(function($error) use (&$message) {
+        $message = $error->getMessage();
+        return ''; // Prevent invalid result exception
+      })
+      ->handle($this->request);
+
+    $this->assertSame('error', $message);
+  }
+
+  public function testErrorHandlingInNestedContext()
+  {
+    $message = '';
+
+    (new Router)
+      ->context('prefix', function(Router $router){
+        $router
+          ->error(function($error){
+            throw new \Exception($error->getMessage() . '-prefix');
+          })
+          ->context('test', function(Router $router){
+            $router
+              ->error(function($error){
+                throw new \Exception($error->getMessage() . '-test');
+              })
+              ->get('/', function(){
+                throw new \Exception('initial');
+              });
+          });
+      })
+      ->error(function($error) use (&$message){
+        $message = $error->getMessage() . '-root';
+        return ''; // Prevent invalid result exception
+      })
+      ->handle($this->request);
+
+    $this->assertSame('initial-test-prefix-root', $message);
+  }
 }
