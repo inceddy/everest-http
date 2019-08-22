@@ -45,6 +45,16 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
     })->handle($this->request);
   }
 
+  /**
+   * @expectedException        \Everest\Http\HttpException
+   * @expectedExceptionCode 404
+   */
+
+  public function testUndefinedRouteLeedsToException()
+  {
+    $router = (new Router)->handle($this->request);
+  }
+
 
   public function testRoutingGet()
   {
