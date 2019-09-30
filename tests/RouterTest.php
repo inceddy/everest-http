@@ -55,6 +55,20 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
     $router = (new Router)->handle($this->request);
   }
 
+  public function testRoutingHost()
+  {
+    $router = new Router;
+    $router
+      ->context('', function($router){
+        $router
+          ->host('steingrebe.de')
+          ->get('/prefix/test', function() {
+            $this->assertTrue(true);
+            return '';
+          });
+      })
+      ->handle($this->request);
+  }
 
   public function testRoutingGet()
   {
@@ -104,6 +118,17 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
       $router->get('test', function() use ($test) {
         $test->assertTrue(true);
         return 'Response!';
+      });
+    })->handle($this->request);
+  }
+
+  public function testUnprefixedCOntext()
+  {
+    $router = new Router(['debug' => true]);
+    $router->context(function(Router $router) {
+      $router->get('/prefix/test', function() {
+        $this->assertTrue(true);
+        return '';
       });
     })->handle($this->request);
   }

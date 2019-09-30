@@ -11,15 +11,13 @@
 
 namespace Everest\Http;
 
-use Everest\Http\Responses\ResponseInterface;
-use Everest\Http\Responses\Response;
+use Everest\Http\Requests\Request;
+use Everest\Http\Requests\RequestInterface;
+use Everest\Http\Requests\ServerRequest;
 use Everest\Http\Responses\JsonResponse;
 use Everest\Http\Responses\RedirectResponse;
-
-use Everest\Http\Requests\RequestInterface;
-use Everest\Http\Requests\Request;
-use Everest\Http\Requests\ServerRequest;
-
+use Everest\Http\Responses\Response;
+use Everest\Http\Responses\ResponseInterface;
 
 /**
  * Class for routing http requests
@@ -82,7 +80,12 @@ class Router {
    * @return self
    */
   
-  public function context(string $prefix, $invoker) {
+  public function context($prefix, $invoker = null)
+  {
+    if ($invoker === null) {
+      $invoker = $prefix;
+      $prefix = '';
+    }
 
     if (!$invoker instanceof \Closure) {
       throw new \InvalidArgumentException('Context invoker must be instance of Closure.');
@@ -145,6 +148,22 @@ class Router {
       $this->currentContext->addMiddleware($middleware, RoutingContext::AFTER);
     }
 
+    return $this;
+  }
+
+
+  /**
+   * Sets host for current context
+   *
+   * @param  string $host
+   *    The host name
+   *
+   * @return $this
+   */
+  
+  public function host(string $host)
+  {
+    $this->currentContext->setHost($host);
     return $this;
   }
 
@@ -445,7 +464,7 @@ class Router {
     $host = $context->getHost();
 
     // Early return if context host does not match the request host
-    if ($host && strcasecmp($host, $uri->getHost()) == 0) {
+    if ($host && strcasecmp($host, $uri->getHost()) != 0) {
       return null;
     }
 
@@ -559,6 +578,8 @@ class Router {
           $request
         ));
       }
+
+      throw $error;
     }
 
     // Restore context
