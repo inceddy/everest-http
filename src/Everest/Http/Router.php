@@ -460,15 +460,8 @@ class Router {
 
   private function handleContext(ServerRequest $request, RoutingContext $context, bool $isRoot = false) :? Response
   {
-    $uri  = $request->getUri();
-    $host = $context->getHost();
-
-    // Early return if context host does not match the request host
-    if ($host && strcasecmp($host, $uri->getHost()) != 0) {
-      return null;
-    }
-
-    $path = $uri->getPath();
+    $uri    = $request->getUri();
+    $path   = $uri->getPath();
     $prefix = $context->getPrefixedPath();
 
     // Early return if context prefix does not match the request path
@@ -484,6 +477,14 @@ class Router {
 
     // Invoke context
     $context($this);
+
+    // Early return if context host does not match the request host
+    $host = $context->getHost();
+    if ($host && strcasecmp($host, $uri->getHost()) != 0) {
+      // Restore context
+      $this->currentContext = $prevContext;
+      return null;
+    }
 
     // Save orginal request
     $orgRequest = $request;
@@ -509,7 +510,6 @@ class Router {
           ? get_class($beforeResult)
           : gettype($beforeResult)
       ));
-      
     }
 
     try {
@@ -535,18 +535,15 @@ class Router {
         $this->currentContext->getMiddlewares(RoutingContext::AFTER)
       );
 
-
       // Handle routes
       foreach ($routes as $routeAndHandler) {
         [$route, $handler] = $routeAndHandler;
 
-        // Prefix route with current context prefix
-        $route->setPrefix($prefix);
-        
-        // Execute route handler and before middleware
-        //$result = $composedMiddlewareBefore($handler)($request, $route);
-
-        $result = $this->handleRoute($route, $handler, $request);
+        $result = $this->handleRoute(
+          $route->setPrefix($prefix), 
+          $handler, 
+          $request
+        );
 
         // Call next handler if `null` was returned
         if (null === $result) {

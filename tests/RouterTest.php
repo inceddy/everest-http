@@ -61,6 +61,14 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
     $router
       ->context('', function($router){
         $router
+          ->host('foo.de')
+          ->get('/prefix/test', function() {
+            $this->assertTrue(false);
+            return '';
+          });
+      })
+      ->context('', function($router){
+        $router
           ->host('steingrebe.de')
           ->get('/prefix/test', function() {
             $this->assertTrue(true);
