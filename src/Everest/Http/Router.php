@@ -25,17 +25,6 @@ use Everest\Http\Responses\ResponseInterface;
 
 class Router {
 
-  private const DEFAULT_OPTIONS = [
-    'debug' => false
-  ];
-
-  /**
-   * Options for this router
-   * @var array
-   */
-  
-  private $options;
-
   /**
    * Root routing context
    * @var Everest\Http\RoutingContext
@@ -59,10 +48,8 @@ class Router {
    * @return self
    */
   
-  public function __construct(array $options = [])
+  public function __construct()
   {
-    $this->options = array_merge(self::DEFAULT_OPTIONS, $options);
-
     $this->rootContext =
     $this->currentContext = new RoutingContext;
   }
