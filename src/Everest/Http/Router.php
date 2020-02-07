@@ -410,7 +410,7 @@ class Router {
         return new Response($result);
       // Uri -> transform to redirect response
       case $result instanceof Uri:
-        return new RedirectResponse($uri);
+        return new RedirectResponse($result);
       // Array -> transform to json response
       case is_array($result) || is_object($result):
         return new JsonResponse($result);
