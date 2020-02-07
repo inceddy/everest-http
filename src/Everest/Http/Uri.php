@@ -42,6 +42,10 @@ class Uri implements \ArrayAccess {
 
   private const HOSTNAME_PATTERN = '/^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$/i';
 
+  public static $defaultScheme = 'http';
+
+  public static $defaultHost   = 'localhost';
+
 
   /**
    * The scheme of this URL eg. `http`.
@@ -227,8 +231,8 @@ class Uri implements \ArrayAccess {
     }
 
     $parts = array_merge([
-      'scheme'   => 'http',
-      'host'     => 'localhost',
+      'scheme'   => self::$defaultScheme,
+      'host'     => self::$defaultHost,
       'port'     => null,
       'user'     => null,
       'pass'     => null,

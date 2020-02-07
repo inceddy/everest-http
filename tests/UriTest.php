@@ -109,7 +109,7 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 	}
 
 
-	public function testHost()
+	public function testHostImmutable()
 	{
 		$uri = Uri::from('https://some-server.de');
 
@@ -117,6 +117,24 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame($uri, $uri->withHost('some-server.de'));
 		// Clone on change
 		$this->assertNotSame($uri, $uri->withHost('some-other-server.de')); 
+	}
+
+	public function hostProvider()
+	{
+		return [
+			['localhost',    'localhost'],
+			['ic3.local:8080', 'ic3.local']
+		];
+	}
+
+	/**
+	 * @dataProvider hostProvider
+	 */
+
+	public function testHost($host, $hostShould)
+	{
+		$uri = Uri::from($host);
+		$this->assertSame($uri->getHost(), $hostShould);
 	}
 
 
