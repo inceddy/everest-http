@@ -211,6 +211,9 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 		$this->assertNotSame($uri, $uri2 = $uri->withQuery(['foo' => 'bar'])); 
 		$this->assertSame('foo=bar', $uri2->getQuery());
 
+		$this->assertEmpty($uri->withQuery([])->getQuery());
+		$this->assertEmpty($uri->withQuery('')->getQuery());
+
 		$this->assertSame(['foo' => 'bar'], $uri2->getQueryArray());
 	}
 

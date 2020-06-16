@@ -463,7 +463,14 @@ class Uri implements \ArrayAccess {
 
   public function withQueryArray(array $query, bool $merge = false) : Uri
   {
-    if (empty(array_diff_assoc($query, $this->query))) {
+    if (
+      empty(
+        array_merge(
+          array_diff_assoc($query, $this->query),
+          array_diff_assoc($this->query, $query)
+        )
+      )
+    ) {
       return $this;
     }
 
