@@ -41,17 +41,6 @@ class ResponseTest extends \PHPUnit\Framework\TestCase {
 			'multi-array'  => ['bar1', 'bar2']
 		], $response2->getHeaders());
 
-		$response->send();
-
-		// Test sendHeader
-		if (function_exists('xdebug_get_headers')) {
-			$headers = xdebug_get_headers();
-
-			$this->assertEquals('single: bar', $headers[0]);
-			$this->assertEquals('multi-string: bar1, bar2', $headers[1]);
-			$this->assertEquals('multi-array: bar1, bar2', $headers[2]);
-			$this->assertEquals('stack: bar1, bar2, bar3, bar4', $headers[3]);
-		}
 	}
 
 	public function testProtocolVersion()
