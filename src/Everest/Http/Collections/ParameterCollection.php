@@ -179,7 +179,7 @@ class ParameterCollection implements
 	 * @return int
 	 */
 	
-	public function count()
+	public function count() : int
 	{
 		return count($this->parameters);
 	}
@@ -190,7 +190,7 @@ class ParameterCollection implements
 	 * @return ArrayIterator
 	 */
 	
-	public function getIterator()
+	public function getIterator() : ArrayIterator
 	{
 		return new ArrayIterator($this->parameters);
 	}

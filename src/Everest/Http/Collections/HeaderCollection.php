@@ -119,7 +119,6 @@ class HeaderCollection implements
 
 	public function with(string $name, $value, array $options = [])
 	{
-		$normalized = self::normalizeHeaderName($name);
 		$parsed     = self::parseHeaderValue($value);
 
 		if ($this->get($name) === $parsed) {
@@ -249,7 +248,7 @@ class HeaderCollection implements
 	 * @return int
 	 */
 	
-	public function count()
+	public function count() : int
 	{
 		return count($this->headers);
 	}
@@ -260,7 +259,7 @@ class HeaderCollection implements
 	 * @return ArrayIterator
 	 */
 	
-	public function getIterator()
+	public function getIterator() : ArrayIterator
 	{
 		return new ArrayIterator($this->toArray());
 	}

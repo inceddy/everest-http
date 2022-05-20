@@ -53,13 +53,10 @@ class ResponseTest extends \PHPUnit\Framework\TestCase {
 		$this->assertNotSame($response, $response2 = $response->withProtocolVersion('2.0'));
 		$this->assertEquals('2.0', $response2->getProtocolVersion());
 	}
-
-	/**
-	 * @expectedException InvalidArgumentException
-	 */
 	
 	public function testInvalidProtocolVersion()
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		(new Response)->withProtocolVersion('3.6');
 	}
 
@@ -90,12 +87,9 @@ class ResponseTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('Foo Bar', $response2->getReasonPhrase());
 	}
 
-	/**
-	 * @expectedException InvalidArgumentException
-	 */
-	
 	public function testInvalidStatusCode()
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		new Response(null, 5000);
 	}
 
@@ -105,7 +99,7 @@ class ResponseTest extends \PHPUnit\Framework\TestCase {
 			new Cookie('name', 'value')
 		);
 
-		$this->assertContains('Set-Cookie: name=value', (string)$response);
+		$this->assertStringContainsString('Set-Cookie: name=value', (string)$response);
 	}
 
 	public function testMessage()

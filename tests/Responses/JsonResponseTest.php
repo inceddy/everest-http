@@ -9,15 +9,13 @@ class JsonResponseTest extends \PHPUnit\Framework\TestCase {
 	{
 		$response = new JsonResponse(['a' => 'b']);
 		$this->assertEquals(['application/json'], $response->getHeader('Content-Type'));
-		$this->assertContains('{"a":"b"}', (string)$response);
+		$this->assertStringContainsString('{"a":"b"}', (string)$response);
 	}
-
-	/**
-	 * @expectedException InvalidArgumentException
-	 */
 	
 	public function testInvalidJson()
 	{
+		$this->expectException(\InvalidArgumentException::class);
+
 		$response = new JsonResponse(fopen('php://temp', 'r+'));
 	}
 }

@@ -160,7 +160,7 @@ class Uri implements \ArrayAccess {
    *
    * @throws InvalidArgumentException If the string is not a valid uri
    * @param string $uri The string to be parsed into uri object.
-   * @return Everest\Http\Uri
+   * @return Uri
    */
   
   public static function fromString(string $uri) : Uri
@@ -611,7 +611,7 @@ class Uri implements \ArrayAccess {
    * {@inheritDoc}
    */
   
-  public function offsetExists($offset)
+  public function offsetExists(mixed $offset) : bool
   {
     return isset($this->path[$offset]);
   }
@@ -621,7 +621,7 @@ class Uri implements \ArrayAccess {
    * {@inheritDoc}
    */
 
-  public function offsetGet($offset)
+  public function offsetGet(mixed $offset) : mixed
   {
     return $this->path[$offset] ?? null;
   }
@@ -633,7 +633,7 @@ class Uri implements \ArrayAccess {
    * @throws BadMethodCallException if called
    */
 
-  public function offsetSet($offset, $value)
+  public function offsetSet(mixed $offset, mixed $value) : void
   {
     throw new \BadMethodCallException('Not implemented');
   }
@@ -645,7 +645,7 @@ class Uri implements \ArrayAccess {
    * @throws BadMethodCallException if called
    */
 
-  public function offsetUnset($offset)
+  public function offsetUnset(mixed $offset) : void
   {
     throw new \BadMethodCallException('Not implemented');
   }

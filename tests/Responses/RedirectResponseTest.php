@@ -25,6 +25,6 @@ class RedirectResponseTest extends \PHPUnit\Framework\TestCase {
 
 		$this->assertNotSame($uri, $response2->getRedirectionTarget());
 
-		$this->assertContains('https://google.de', (string)$response2);
+		$this->assertStringContainsString('https://google.de', (string)$response2);
 	}
 }

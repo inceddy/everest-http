@@ -1,9 +1,8 @@
 <?php
 
+use Everest\Http\HttpException;
 use Everest\Http\Router;
-use Everest\Http\Route;
 use Everest\Http\Requests\ServerRequest;
-use Everest\Http\Requests\Request;
 use Everest\Http\Responses\Response;
 use Everest\Http\Responses\ResponseInterface;
 use Everest\Http\Uri;
@@ -14,9 +13,10 @@ require __DIR__ . '/fixtures/Middleware.php';
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
  */
+
 class RouterTest extends \PHPUnit\Framework\TestCase {
 
-  public function setUp()
+  public function setUp() : void
   {
     $this->request = new ServerRequest(
       ServerRequest::HTTP_ALL, 
@@ -32,26 +32,22 @@ class RouterTest extends \PHPUnit\Framework\TestCase {
     );
   }
 
-  /**
-   * @expectedException        \Everest\Http\HttpException
-   * @expectedExceptionCode 404
-   */
-
   public function testEmptyResultLeedsToException()
   {
+    $this->expectException(HttpException::class);
+    $this->expectExceptionCode(404);
+
     $test = $this;
     $router = new Router;
     $router->get('prefix/test', function() use ($test) {
     })->handle($this->request);
   }
 
-  /**
-   * @expectedException        \Everest\Http\HttpException
-   * @expectedExceptionCode 404
-   */
-
   public function testUndefinedRouteLeedsToException()
   {
+    $this->expectException(HttpException::class);
+    $this->expectExceptionCode(404);
+
     $router = (new Router)->handle($this->request);
   }
 

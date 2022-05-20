@@ -8,7 +8,7 @@ use Everest\Http\Route;
  */
 class RouteTest extends \PHPUnit\Framework\TestCase {
 
-  public function setUp()
+  public function setUp() : void
   {
     $this->uri = $this->getMockBuilder(Uri::CLASS)
          ->getMock();

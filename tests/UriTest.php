@@ -1,7 +1,6 @@
 <?php
 
 use Everest\Http\Uri;
-use Everest\Http\Route;
 
 /**
  * @author  Philipp Steingrebe <philipp@steingrebe.de>
@@ -29,14 +28,11 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('stg://some-hostname.de', (string)$uri);
 	}
 
-	/**
-	 * @expectedException InvalidArgumentException
-	 */
-
 	public function testInvalidFrom()
 	{
-		// From array
-		$uri = Uri::from(null);
+		$this->expectException(\InvalidArgumentException::class);
+
+		Uri::from(null);
 	}
 
 	public function uriStringProvider()
@@ -67,8 +63,9 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 
 	public function testInvalidFromString()
 	{
-		// From array
-		$uri = Uri::fromString('http://user@:80');
+		$this->expectException(\InvalidArgumentException::class);
+
+		Uri::fromString('http://user@:80');
 	}
 
 
@@ -137,13 +134,10 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame($uri->getHost(), $hostShould);
 	}
 
-
-	/**
-	 * @expectedException InvalidArgumentException
-	 */
-
 	public function testInvalidHost()
 	{
+		$this->expectException(\InvalidArgumentException::class);
+
 		$uri = Uri::from('https://some-server.de');
 		$uri->withHost('_-'); 
 	}
@@ -167,12 +161,10 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame(21, $uri->withScheme('ftp')->getPort());
 	}
 
-	/**
-	 * @expectedException InvalidArgumentException
-	 */
-
 	public function testInvalidPort()
 	{
+		$this->expectException(\InvalidArgumentException::class);
+
 		$uri = Uri::from('https://some-server.de:8080');
 		$uri->withPort(100000);
 	}
@@ -217,12 +209,10 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame(['foo' => 'bar'], $uri2->getQueryArray());
 	}
 
-	/**
-	 * @expectedException InvalidArgumentException
-	 */
-
 	public function testInvalidQuery()
 	{
+		$this->expectException(\InvalidArgumentException::class);
+
 		$uri = Uri::from('https://some-server.de');
 		$uri->withQuery(100000);
 	}
@@ -241,12 +231,10 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('some=value&foo=bar', $uri2->getQuery());
 	}
 
-	/**
-	 * @expectedException InvalidArgumentException
-	 */
-
 	public function testInvalidMergedQuery()
 	{
+		$this->expectException(\InvalidArgumentException::class);
+
 		$uri = Uri::from('https://some-server.de');
 		$uri->withMergedQuery(100000);
 	}
@@ -281,22 +269,19 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 		$this->assertFalse(isset($uri[3]));
 	}
 
-	/**
-	 * @expectedException BadMethodCallException
-	 */
-	
 	public function testArrayAccessOffsetSet()
 	{
+		$this->expectException(\BadMethodCallException::class);
+
 		$uri = Uri::from('http://test.de/a/b/c');
 		$uri[0] = 'foo';
 	}
 
-	/**
-	 * @expectedException BadMethodCallException
-	 */
 	
 	public function testArrayAccessOffsetUnset()
 	{
+		$this->expectException(\BadMethodCallException::class);
+
 		$uri = Uri::from('http://test.de/a/b/c');
 		unset($uri[0]);
 	}

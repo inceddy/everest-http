@@ -10,16 +10,11 @@
  */
 
 namespace Everest\Http\Requests;
-use Everest\Http\MessageTrait;
-use Everest\Http\MessageInterface;
+
 use Everest\Http\UploadedFile;
 use Everest\Http\Stream;
 use Everest\Http\Uri;
 use Everest\Http\Collections\ParameterCollection;
-use Everest\Http\Collections\SessionCollection;
-use Everest\Http\Collections\SessionCollectionInterface;
-use Everest\Http\Collections\CookieCollection;
-use Everest\Http\Collections\CookieCollectionInterface;
 
 class ServerRequest extends Request implements RequestInterface {
 
@@ -650,13 +645,12 @@ class ServerRequest extends Request implements RequestInterface {
 // Define default body parsers
 
 $xmlParser = function ($body) {
-  $backup = libxml_disable_entity_loader(true);
   $backup_errors = libxml_use_internal_errors(true);
 
   $xml = simplexml_load_string($body);
-  libxml_disable_entity_loader($backup);
   libxml_clear_errors();
   libxml_use_internal_errors($backup_errors);
+
   if ($xml === false) {
     return null;
   }

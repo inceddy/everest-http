@@ -43,7 +43,7 @@ class Stream implements StreamInterface
             case is_null($content):
                 $resource = fopen('php://temp', 'r+');
                 if ($content !== '') {
-                    fwrite($resource, $content);
+                    fwrite($resource, $content ?? '');
                     fseek($resource, 0);
                 }
                 return new self($resource, $options);

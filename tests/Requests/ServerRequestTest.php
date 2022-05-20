@@ -12,13 +12,13 @@ use Everest\Http\Tests\WebTestCase;
  */
 class ServerRequestTest extends WebTestCase {
 
-	public function setUp()
+	public function setUp() : void
 	{
 		$this->setupWebRequest();
 	}
 
 
-	public function getServerRequest(int $method = ServerRequest::HTTP_GET, Uri $uri)
+	public function getServerRequest(int $method, Uri $uri)
 	{
 		return new ServerRequest($method, $uri);
 	}

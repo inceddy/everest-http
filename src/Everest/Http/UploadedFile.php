@@ -11,6 +11,7 @@
 
 namespace Everest\Http;
 
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
 /**
