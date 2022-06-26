@@ -36,7 +36,7 @@ class Cookie {
 
   /**
    * The options of this cookie
-   * @var array
+   * @var bool
    */
   
   private $httpOnly;
@@ -71,6 +71,14 @@ class Cookie {
    */
   
   private $path;
+
+  /**
+   * The SameSite attribute of the Set-Cookie HTTP response header allows you to declare 
+   * if your cookie should be restricted to a first-party or same-site context.
+   * @var string|null
+   */
+
+  private $sameSite;
 
 
   /**
@@ -148,7 +156,8 @@ class Cookie {
     bool   $secure   = false, 
            $expires  = 0,
     string $domain   = null,
-    string $path     = null
+    string $path     = null,
+    string $sameSite = null
   )
   {
     $this->name  = self::validateName($name);
@@ -161,6 +170,8 @@ class Cookie {
 
     $this->domain = $domain;
     $this->path   = $path;
+
+    $this->sameSite = $sameSite;
   }
 
 
@@ -217,6 +228,17 @@ class Cookie {
     return $this->path;
   }
 
+  
+  /**
+   * Gets the same site option if set.
+   * @return     string|null  The same site value
+   */
+  
+  public function getSameSite() : ?string
+  {
+    return $this->sameSite;
+  }
+
 
   /**
    * Return whether or not this cookie is only available on TLS
@@ -263,6 +285,10 @@ class Cookie {
 
     if (!empty($this->secure)) {
       $cookie .= '; secure';
+    }
+
+    if ($this->secure && !empty($this->sameSite)) {
+      $cookie .= sprintf('; samesite=%s', $this->sameSite);
     }
 
     if (!empty($this->httpOnly)) {
