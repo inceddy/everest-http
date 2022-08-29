@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Everest.
  *
@@ -27,15 +29,13 @@ class UploadedFile implements UploadedFileInterface
         int $error = UPLOAD_ERR_OK,
         string $name = null,
         string $type = null
-    )
-    {
+    ) {
         $this->tmpName = $tmpName;
         $this->size = $size;
         $this->error = $error;
         $this->name = $name;
         $this->type = $type;
     }
-
 
     /**
      * Retrieve a stream representing the uploaded file.
@@ -53,12 +53,10 @@ class UploadedFile implements UploadedFileInterface
      * @throws \RuntimeException in cases when no stream is available.
      * @throws \RuntimeException in cases when no stream can be created.
      */
-
     public function getStream()
     {
         return Stream::from($this->tmpName);
     }
-
 
     /**
      * Move the uploaded file to a new location.
@@ -92,7 +90,6 @@ class UploadedFile implements UploadedFileInterface
      * @throws \RuntimeException on any error during the move operation.
      * @throws \RuntimeException on the second or subsequent call to the method.
      */
-
     public function moveTo($targetPath)
     {
         static $moved = false;
@@ -101,15 +98,14 @@ class UploadedFile implements UploadedFileInterface
             throw new \RuntimeException('Subsequent calls of moveTo are not allowed.');
         }
 
-        if (!is_writable($targetPath)) {
+        if (! is_writable($targetPath)) {
             throw new \InvalidArgumentException('The target path specified is invalid.');
         }
 
-        if ($this->error !== UPLOAD_ERR_OK || !$moved = move_uploaded_file($this->tmpName, $targetPath)) {
+        if ($this->error !== UPLOAD_ERR_OK || ! $moved = move_uploaded_file($this->tmpName, $targetPath)) {
             throw new \RuntimeException('An error occured during file upload.', $this->error);
         }
     }
-
 
     /**
      * Retrieve the file size.
@@ -120,12 +116,10 @@ class UploadedFile implements UploadedFileInterface
      *
      * @return int|null The file size in bytes or null if unknown.
      */
-
-    public function getSize() :? int
+    public function getSize(): ? int
     {
         return $this->size;
     }
-
 
     /**
      * Retrieve the error associated with the uploaded file.
@@ -141,8 +135,7 @@ class UploadedFile implements UploadedFileInterface
      * @see http://php.net/manual/en/features.file-upload.errors.php
      * @return int One of PHP's UPLOAD_ERR_XXX constants.
      */
-  
-    public function getError() : int
+    public function getError(): int
     {
         return $this->error;
     }
@@ -160,12 +153,10 @@ class UploadedFile implements UploadedFileInterface
      * @return string|null The filename sent by the client or null if none
      *     was provided.
      */
-    
-    public function getClientFilename() :? string
+    public function getClientFilename(): ? string
     {
         return $this->name;
     }
-
 
     /**
      * Retrieve the media type sent by the client.
@@ -180,8 +171,7 @@ class UploadedFile implements UploadedFileInterface
      * @return string|null The media type sent by the client or null if none
      *     was provided.
      */
- 
-    public function getClientMediaType() :? string
+    public function getClientMediaType(): ? string
     {
         return $this->type;
     }

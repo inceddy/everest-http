@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Everest.
  *
@@ -10,41 +12,40 @@
  */
 
 namespace Everest\Http\Requests;
+
 use Everest\Http\Uri;
 
-interface RequestInterface {
-  public function getRequestTarget() : string;
+interface RequestInterface
+{
+    public function getRequestTarget(): string;
 
-  public function withRequestTarget(string $target);
+    public function withRequestTarget(string $target);
 
-  public function getMethod() : string;
+    public function getMethod(): string;
 
-  public function getMethodFlag() : int;
+    public function getMethodFlag(): int;
 
-  public function withMethod($method);
+    public function withMethod($method);
 
-  public function isMethod($method) : bool;
+    public function isMethod($method): bool;
 
-  /**
-   * Tests if request method is POST.
-   * Alias for Request::isMethod(Request::HTTP_POST).
-   *
-   * @return boolean
-   */
-  
-  public function isMethodPost() : bool;
+    /**
+     * Tests if request method is POST.
+     * Alias for Request::isMethod(Request::HTTP_POST).
+     *
+     * @return boolean
+     */
+    public function isMethodPost(): bool;
 
+    /**
+     * Tests if request method is GET.
+     * Alias for Request::isMethod(Request::HTTP_GET).
+     *
+     * @return boolean
+     */
+    public function isMethodGet(): bool;
 
-  /**
-   * Tests if request method is GET.
-   * Alias for Request::isMethod(Request::HTTP_GET).
-   *
-   * @return boolean
-   */
+    public function getUri(): Uri;
 
-  public function isMethodGet() : bool;
-
-  public function getUri() : Uri;
-
-  public function withUri(Uri $uri, bool $preserveHost = false);
+    public function withUri(Uri $uri, bool $preserveHost = false);
 }
