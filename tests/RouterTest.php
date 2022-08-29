@@ -58,21 +58,21 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $router = new Router();
         $router
             ->context('', function ($router) {
-          $router
-              ->host('foo.de')
-              ->get('/prefix/test', function () {
-              $this->assertTrue(false);
-              return '';
-          });
-      })
+                $router
+                    ->host('foo.de')
+                    ->get('/prefix/test', function () {
+                  $this->assertTrue(false);
+                  return '';
+              });
+            })
             ->context('', function ($router) {
-          $router
-              ->host('steingrebe.de')
-              ->get('/prefix/test', function () {
-              $this->assertTrue(true);
-              return '';
-          });
-      })
+                $router
+                    ->host('steingrebe.de')
+                    ->get('/prefix/test', function () {
+                  $this->assertTrue(true);
+                  return '';
+              });
+            })
             ->handle($this->request);
     }
 
@@ -167,14 +167,14 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         ]);
         $router
             ->before(function (Closure $next, ServerRequest $request) {
-        return $next($request->withUri(
-            $request->getUri()->withPathPrepend('blaa')
-        ));
-    })
+                return $next($request->withUri(
+                    $request->getUri()->withPathPrepend('blaa')
+                ));
+            })
             ->get('/blaa/blub', function () use ($test) {
-        $test->assertTrue(true);
-        return 'Response!';
-    })
+                $test->assertTrue(true);
+                return 'Response!';
+            })
             ->handle(new ServerRequest(
                 ServerRequest::HTTP_ALL,
                 Uri::from('http://steingrebe.de/blub')
@@ -191,20 +191,20 @@ class RouterTest extends \PHPUnit\Framework\TestCase
     $router
       // Closure middleware
         ->before(function (Closure $next, ServerRequest $request) {
-          return $next($request->withAttribute('attr1', 1));
-      })
+            return $next($request->withAttribute('attr1', 1));
+        })
       // Object middleware
         ->before(new Middleware('attr2', 2))
         ->after(function (Closure $next, $response) {
-          return $response->withHeader('test', 'value');
-      })
+            return $response->withHeader('test', 'value');
+        })
         ->get('prefix/test', function (ServerRequest $request) {
-          $this->assertSame(1, $request->getAttribute('attr1'));
-          $this->assertSame(2, $request->getAttribute('attr2'));
-          $this->assertEquals([], $request->getAttribute('parameter'));
+            $this->assertSame(1, $request->getAttribute('attr1'));
+            $this->assertSame(2, $request->getAttribute('attr2'));
+            $this->assertEquals([], $request->getAttribute('parameter'));
 
-          return 'Response';
-      })
+            return 'Response';
+        })
         ->handle($this->request);
 
         $this->assertInstanceOf(ResponseInterface::class, $result);
@@ -218,17 +218,17 @@ class RouterTest extends \PHPUnit\Framework\TestCase
       // Root context middleware
             ->before(new Middleware('attr1', 1))
             ->context('prefix', function (Router $router) {
-          $router
+                $router
           // Sub context middleware
-              ->before(new Middleware('attr2', 2))
-              ->get('{var}', function (ServerRequest $request) {
-              $this->assertSame('test', $request->getAttribute('var'));
-              $this->assertSame(1, $request->getAttribute('attr1'));
-              $this->assertSame(2, $request->getAttribute('attr2'));
+                    ->before(new Middleware('attr2', 2))
+                    ->get('{var}', function (ServerRequest $request) {
+                  $this->assertSame('test', $request->getAttribute('var'));
+                  $this->assertSame(1, $request->getAttribute('attr1'));
+                  $this->assertSame(2, $request->getAttribute('attr2'));
 
-              return 'Middleware Response!';
-          });
-      })
+                  return 'Middleware Response!';
+              });
+            })
             ->handle($this->request);
     }
 
@@ -238,16 +238,16 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $router
       // Root context middleware
             ->before(function ($next, $request) {
-          $uri = $request->getUri()->withPath('prefix/test-mod');
-          return $next($request->withUri($uri));
-      })
+                $uri = $request->getUri()->withPath('prefix/test-mod');
+                return $next($request->withUri($uri));
+            })
             ->context('prefix', function (Router $router) {
-          $router
-              ->get('{var}', function (ServerRequest $request) {
-              $this->assertSame('test-mod', $request->getAttribute('var'));
-              return 'Middleware Response!';
-          });
-      })
+                $router
+                    ->get('{var}', function (ServerRequest $request) {
+                  $this->assertSame('test-mod', $request->getAttribute('var'));
+                  return 'Middleware Response!';
+              });
+            })
             ->handle($this->request);
     }
 
@@ -257,12 +257,12 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $calledDefault = false;
         $response = (new Router())
             ->otherwise(function () use (&$calledDefault) {
-          $calledDefault = true;
-          return 'not-empty-result';
-      })
+                $calledDefault = true;
+                return 'not-empty-result';
+            })
             ->get('prefix/test', function () use (&$calledHandler) {
-          $calledHandler = true;
-      })
+                $calledHandler = true;
+            })
             ->handle($this->request);
 
         $this->assertTrue($calledHandler && $calledDefault);
@@ -274,12 +274,12 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $calledDefault = false;
         $response = (new Router())
             ->otherwise(function () use (&$calledDefault) {
-          $calledDefault = true;
-          return 'not-empty-result';
-      })
+                $calledDefault = true;
+                return 'not-empty-result';
+            })
             ->get('this/does/not/match', function () use (&$calledHandler) {
-          $calledHandler = true;
-      })
+                $calledHandler = true;
+            })
             ->handle($this->request);
 
         $this->assertTrue($calledDefault);
@@ -294,8 +294,8 @@ class RouterTest extends \PHPUnit\Framework\TestCase
         $this->expectException(\RuntimeException::class);
         $router = (new Router())
             ->before(function () {
-          return 'string';
-      })
+                return 'string';
+            })
             ->handle($this->request);
     }
 
@@ -303,8 +303,8 @@ class RouterTest extends \PHPUnit\Framework\TestCase
     {
         $result = $router = (new Router())
             ->before(function () {
-          return new Response('content');
-      })
+                return new Response('content');
+            })
             ->handle($this->request);
 
         $this->assertSame('content', $result->getBody()->getContents());
@@ -316,12 +316,12 @@ class RouterTest extends \PHPUnit\Framework\TestCase
 
         (new Router())
             ->get('prefix/test', function () {
-          throw new \Exception('error');
-      })
+                throw new \Exception('error');
+            })
             ->error(function ($error) use (&$message) {
-          $message = $error->getMessage();
-          return ''; // Prevent invalid result exception
-      })
+                $message = $error->getMessage();
+                return ''; // Prevent invalid result exception
+            })
             ->handle($this->request);
 
         $this->assertSame('error', $message);
@@ -333,24 +333,24 @@ class RouterTest extends \PHPUnit\Framework\TestCase
 
         (new Router())
             ->context('prefix', function (Router $router) {
-          $router
-              ->error(function ($error) {
-              throw new \Exception($error->getMessage() . '-prefix');
-          })
-              ->context('test', function (Router $router) {
-              $router
-                  ->error(function ($error) {
-                  throw new \Exception($error->getMessage() . '-test');
+                $router
+                    ->error(function ($error) {
+                  throw new \Exception($error->getMessage() . '-prefix');
               })
-                  ->get('/', function () {
-                  throw new \Exception('initial');
+                    ->context('test', function (Router $router) {
+                  $router
+                      ->error(function ($error) {
+                      throw new \Exception($error->getMessage() . '-test');
+                  })
+                      ->get('/', function () {
+                      throw new \Exception('initial');
+                  });
               });
-          });
-      })
+            })
             ->error(function ($error) use (&$message) {
-          $message = $error->getMessage() . '-root';
-          return ''; // Prevent invalid result exception
-      })
+                $message = $error->getMessage() . '-root';
+                return ''; // Prevent invalid result exception
+            })
             ->handle($this->request);
 
         $this->assertSame('initial-test-prefix-root', $message);

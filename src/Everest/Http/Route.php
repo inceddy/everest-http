@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Everest\Http;
 
 use Everest\Http\Requests\Request;
+use Stringable;
 
 /**
  * Route describing an uri path
@@ -23,7 +24,7 @@ use Everest\Http\Requests\Request;
  */
 
 
-class Route implements \Stringable
+class Route implements Stringable
 {
     // user/{id|[0-9+]?}
     private const VAR_PATTERN = '/\{([a-z0-9\-_]+)(?:|([^\}]+))?\}/i';
@@ -80,7 +81,7 @@ class Route implements \Stringable
         $route = trim($route, " \t\n\r"); // Remove leading and tailing whitespaces
 
         // Check for none termination
-        if ($route !== '' && substr($route, -1) === '*') {
+        if ($route !== '' && str_ends_with($route, '*')) {
             $route = substr($route, 0, -1);
             $this->setTermination(false);
         }

@@ -11,12 +11,6 @@
         <directory name="src"/>
         <ignoreFiles>
             <directory name="vendor"/>
-            <directory name="src/IC3/Infrastructure/Doctrine/Proxies"/>
-            <directory name="src/IC3/Utils"/>
-            <file name="src/IC3/Utils/FuzzySearch.php"/>
         </ignoreFiles>
     </projectFiles>
-    <plugins>
-        <pluginClass class="Weirdan\DoctrinePsalmPlugin\Plugin"/>
-    </plugins>
 </psalm>

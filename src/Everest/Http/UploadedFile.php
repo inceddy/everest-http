@@ -13,8 +13,10 @@ declare(strict_types=1);
 
 namespace Everest\Http;
 
+use InvalidArgumentException;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
+use RuntimeException;
 
 /**
  * Uploaded file represenation.
@@ -23,6 +25,16 @@ use Psr\Http\Message\UploadedFileInterface;
 
 class UploadedFile implements UploadedFileInterface
 {
+    private $tmpName;
+
+    private $size;
+
+    private $error;
+
+    private $name;
+
+    private $type;
+
     public function __construct(
         string $tmpName,
         int $size = null,
@@ -50,8 +62,8 @@ class UploadedFile implements UploadedFileInterface
      * an exception.
      *
      * @return StreamInterface Stream representation of the uploaded file.
-     * @throws \RuntimeException in cases when no stream is available.
-     * @throws \RuntimeException in cases when no stream can be created.
+     * @throws RuntimeException in cases when no stream is available.
+     * @throws RuntimeException in cases when no stream can be created.
      */
     public function getStream()
     {
@@ -59,51 +71,53 @@ class UploadedFile implements UploadedFileInterface
     }
 
     /**
-     * Move the uploaded file to a new location.
+     *  Move the uploaded file to a new location.
      *
-     * Use this method as an alternative to move_uploaded_file(). This method is
-     * guaranteed to work in both SAPI and non-SAPI environments.
-     * Implementations must determine which environment they are in, and use the
-     * appropriate method (move_uploaded_file(), rename(), or a stream
-     * operation) to perform the operation.
+     *  Use this method as an alternative to move_uploaded_file(). This method is
+     *  guaranteed to work in both SAPI and non-SAPI environments.
+     *  Implementations must determine which environment they are in, and use the
+     *  appropriate method (move_uploaded_file(), rename(), or a stream
+     *  operation) to perform the operation.
      *
-     * $targetPath may be an absolute path, or a relative path. If it is a
-     * relative path, resolution should be the same as used by PHP's rename()
-     * function.
+     *  $targetPath may be an absolute path, or a relative path. If it is a
+     *  relative path, resolution should be the same as used by PHP's rename()
+     *  function.
      *
-     * The original file or stream MUST be removed on completion.
+     *  The original file or stream MUST be removed on completion.
      *
-     * If this method is called more than once, any subsequent calls MUST raise
-     * an exception.
+     *  If this method is called more than once, any subsequent calls MUST raise
+     *  an exception.
      *
-     * When used in an SAPI environment where $_FILES is populated, when writing
-     * files via moveTo(), is_uploaded_file() and move_uploaded_file() SHOULD be
-     * used to ensure permissions and upload status are verified correctly.
+     *  When used in an SAPI environment where $_FILES is populated, when writing
+     *  files via moveTo(), is_uploaded_file() and move_uploaded_file() SHOULD be
+     *  used to ensure permissions and upload status are verified correctly.
      *
-     * If you wish to move to a stream, use getStream(), as SAPI operations
-     * cannot guarantee writing to stream destinations.
+     *  If you wish to move to a stream, use getStream(), as SAPI operations
+     *  cannot guarantee writing to stream destinations.
      *
      * @see http://php.net/is_uploaded_file
      * @see http://php.net/move_uploaded_file
+     *
      * @param string $targetPath Path to which to move the uploaded file.
-     * @throws \InvalidArgumentException if the $targetPath specified is invalid.
-     * @throws \RuntimeException on any error during the move operation.
-     * @throws \RuntimeException on the second or subsequent call to the method.
+     *
+     * @throws InvalidArgumentException if the $targetPath specified is invalid.
+     * @throws RuntimeException on any error during the move operation.
+     * @throws RuntimeException on the second or subsequent call to the method.
      */
     public function moveTo($targetPath)
     {
         static $moved = false;
 
         if ($moved) {
-            throw new \RuntimeException('Subsequent calls of moveTo are not allowed.');
+            throw new RuntimeException('Subsequent calls of moveTo are not allowed.');
         }
 
         if (! is_writable($targetPath)) {
-            throw new \InvalidArgumentException('The target path specified is invalid.');
+            throw new InvalidArgumentException('The target path specified is invalid.');
         }
 
         if ($this->error !== UPLOAD_ERR_OK || ! $moved = move_uploaded_file($this->tmpName, $targetPath)) {
-            throw new \RuntimeException('An error occured during file upload.', $this->error);
+            throw new RuntimeException('An error occured during file upload.', $this->error);
         }
     }
 

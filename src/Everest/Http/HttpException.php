@@ -13,18 +13,20 @@ declare(strict_types=1);
 
 namespace Everest\Http;
 
+use Everest\Http\Responses\Response;
+use Exception;
+
 /**
  * @author Philipp Steingrebe <philipp@steingrebe.de>
  */
-
-class HttpException extends \Exception
+class HttpException extends Exception
 {
     public function __construct($code)
     {
-        if (! array_key_exists($code, Responses\Response::STATUS_CODE_MAP)) {
+        if (! array_key_exists($code, Response::STATUS_CODE_MAP)) {
             trigger_error(sprintf('Http error code \'%s\' is unknown. Error code was set to 500.', $code), E_USER_ERROR);
             $code = 500;
         }
-        parent::__construct(Responses\Response::STATUS_CODE_MAP[$code], $code);
+        parent::__construct(Response::STATUS_CODE_MAP[$code], $code);
     }
 }

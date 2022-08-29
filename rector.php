@@ -18,6 +18,7 @@ return static function (RectorConfig $rectorConfig): void {
         LevelSetList::UP_TO_PHP_81,
     ]);
 
+    $rectorConfig->importNames();
 
     $rectorConfig->skip([
         // These files trigger errors

@@ -13,12 +13,17 @@ declare(strict_types=1);
 
 namespace Everest\Http;
 
+use DateInterval;
+use DateTime;
+use DateTimeInterface;
+use InvalidArgumentException;
+use Stringable;
+
 /**
  * Cookie represenation.
  * @author Philipp Steingrebe <philipp@steingrebe.de>
  */
-
-class Cookie implements \Stringable
+class Cookie implements Stringable
 {
     /**
      * The name of this cookie
@@ -218,7 +223,7 @@ class Cookie implements \Stringable
     private static function validateName(string $name): string
     {
         if (empty($name) || preg_match("/[=,; \t\r\n\013\014]/", $name)) {
-            throw new \InvalidArgumentException(sprintf('Invalid name \'%s\'.', $name));
+            throw new InvalidArgumentException(sprintf('Invalid name \'%s\'.', $name));
         }
 
         return $name;
@@ -234,19 +239,19 @@ class Cookie implements \Stringable
         }
 
         // Add intervals to current type
-        if ($expires instanceof \DateInterval) {
-            $now = new \DateTime('now');
+        if ($expires instanceof DateInterval) {
+            $now = new DateTime('now');
             return (int) $now->add($expires)->format('U');
         }
 
-        if ($expires instanceof \DateTimeInterface) {
+        if ($expires instanceof DateTimeInterface) {
             return (int) $expires->format('U');
         }
 
         $expires = strtotime((string) $expires);
 
         if ($expires === false || $expires === -1) {
-            throw new \InvalidArgumentException('The expiration time is not valid.');
+            throw new InvalidArgumentException('The expiration time is not valid.');
         }
 
         return $expires;

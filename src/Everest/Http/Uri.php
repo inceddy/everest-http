@@ -13,7 +13,10 @@ declare(strict_types=1);
 
 namespace Everest\Http;
 
+use ArrayAccess;
+use BadMethodCallException;
 use InvalidArgumentException;
+use Stringable;
 
 /**
  * Uri representation.
@@ -21,7 +24,7 @@ use InvalidArgumentException;
  * @package Everest\Http
  */
 
-class Uri implements \ArrayAccess, \Stringable
+class Uri implements ArrayAccess, Stringable
 {
     private const PORT_SCHEME_MAP = [
         21 => 'ftp',
@@ -156,19 +159,17 @@ class Uri implements \ArrayAccess, \Stringable
     }
 
     /**
-     * General factory method.
-     * Calls a specific factory method based on the
-     * supplied argument type.
+     *  General factory method.
+     *  Calls a specific factory method based on the
+     *  supplied argument type.
      *
      * @throws InvalidArgumentException
      *   If supplied argument can not be casted to an iri object
      *
      * @param mixed $uri
      *   The parameter to be casted to an uri object
-     *
-     * @return Everest\Http\Uri
      */
-    public static function from(mixed $uri)
+    public static function from(mixed $uri): self
     {
         return match (true) {
             $uri instanceof self => $uri,
@@ -181,8 +182,7 @@ class Uri implements \ArrayAccess, \Stringable
         };
     }
 
-
-    public function withScheme(string $scheme, bool $autoPort = true)
+    public function withScheme(string $scheme, bool $autoPort = true): static
     {
         $scheme = strtolower($scheme);
 
@@ -200,12 +200,10 @@ class Uri implements \ArrayAccess, \Stringable
         return $uri;
     }
 
-
     public function getScheme(): string
     {
         return $this->scheme;
     }
-
 
     public function getAuthority(): string
     {
@@ -221,7 +219,6 @@ class Uri implements \ArrayAccess, \Stringable
 
         return $authority;
     }
-
 
     public function withUserInfo(string $user, string $password = null): self
     {
@@ -241,7 +238,6 @@ class Uri implements \ArrayAccess, \Stringable
     {
         return $this->userInfo;
     }
-
 
     public function withHost(string $host): self
     {
@@ -280,7 +276,6 @@ class Uri implements \ArrayAccess, \Stringable
     {
         return $this->port;
     }
-
 
     public function withPath(string $path): self
     {
@@ -329,7 +324,6 @@ class Uri implements \ArrayAccess, \Stringable
         return $uri;
     }
 
-
     public function getPath(): string
     {
         return implode('/', $this->path);
@@ -344,14 +338,6 @@ class Uri implements \ArrayAccess, \Stringable
         return $this->path;
     }
 
-    /**
-     * [withQueryString description]
-     *
-     * @param  string       $query [description]
-     * @param  bool|boolean $merge [description]
-     *
-     * @return [type]              [description]
-     */
     public function withQueryString(string $query, bool $merge = false): self
     {
         return $this->withQueryArray(
@@ -419,12 +405,10 @@ class Uri implements \ArrayAccess, \Stringable
         return $this->query;
     }
 
-
-    public function getQuery()
+    public function getQuery(): string
     {
         return http_build_query($this->query);
     }
-
 
     public function withFragment(string $fragment): self
     {
@@ -438,13 +422,12 @@ class Uri implements \ArrayAccess, \Stringable
         return $uri;
     }
 
-
-    public function getFragment()
+    public function getFragment(): string
     {
-        return $this->fragment;
+        return $this->fragment ?? '';
     }
 
-    public function toString()
+    public function toString(): string
     {
         $uri = '';
 
@@ -476,32 +459,24 @@ class Uri implements \ArrayAccess, \Stringable
         return (string) $uri === $this->toString();
     }
 
-
     public function offsetExists(mixed $offset): bool
     {
         return isset($this->path[$offset]);
     }
-
 
     public function offsetGet(mixed $offset): mixed
     {
         return $this->path[$offset] ?? null;
     }
 
-    /**
-     * @throws BadMethodCallException if called
-     */
     public function offsetSet(mixed $offset, mixed $value): never
     {
-        throw new \BadMethodCallException('Not implemented');
+        throw new BadMethodCallException('Not implemented');
     }
 
-    /**
-     * @throws BadMethodCallException if called
-     */
     public function offsetUnset(mixed $offset): never
     {
-        throw new \BadMethodCallException('Not implemented');
+        throw new BadMethodCallException('Not implemented');
     }
 
     private static function validatePath(string $path): array

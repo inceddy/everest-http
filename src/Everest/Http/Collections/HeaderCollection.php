@@ -16,12 +16,13 @@ namespace Everest\Http\Collections;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
+use Stringable;
 
 class HeaderCollection implements
     ParameterCollectionInterface,
     Countable,
     IteratorAggregate,
-    \Stringable
+    Stringable
 {
     /**
      * The parameter cache as key-value-storage.
@@ -56,26 +57,23 @@ class HeaderCollection implements
         return $string;
     }
 
-
     public function has(string $name): bool
     {
         return isset($this->headers[self::normalizeHeaderName($name)]);
     }
-
 
     public function get(string $name)
     {
         return $this->headers[self::normalizeHeaderName($name)][1] ?? [];
     }
 
-
-    public function set(string $name, $value, array $options = [])
+    public function set(string $name, $value, array $options = []): static
     {
         $this->headers[self::normalizeHeaderName($name)] = [$name, self::parseHeaderValue($value)];
+        return $this;
     }
 
-
-    public function with(string $name, $value, array $options = [])
+    public function with(string $name, $value, array $options = []): static
     {
         $parsed = self::parseHeaderValue($value);
 
@@ -89,8 +87,7 @@ class HeaderCollection implements
         return $new;
     }
 
-
-    public function push(string $name, $value)
+    public function push(string $name, $value): static
     {
         $parsed = self::parseHeaderValue($value);
 
@@ -108,8 +105,7 @@ class HeaderCollection implements
         return $this;
     }
 
-
-    public function withAdded(string $name, $value)
+    public function withAdded(string $name, $value): static
     {
         $parsed = self::parseHeaderValue($value);
 
@@ -133,13 +129,13 @@ class HeaderCollection implements
     }
 
 
-    public function delete(string $name)
+    public function delete(string $name): static
     {
         unset($this->headers[self::normalizeHeaderName($name)]);
+        return $this;
     }
 
-
-    public function without(string $name)
+    public function without(string $name): static
     {
         if (! $this->has($name)) {
             return $this;
@@ -150,7 +146,6 @@ class HeaderCollection implements
 
         return $new;
     }
-
 
     public function toArray(): array
     {

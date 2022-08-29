@@ -14,11 +14,16 @@ declare(strict_types=1);
 namespace Everest\Http;
 
 use Everest\Http\Requests\Request;
+use Everest\Http\Requests\RequestInterface;
 use Everest\Http\Requests\ServerRequest;
 use Everest\Http\Responses\JsonResponse;
 use Everest\Http\Responses\RedirectResponse;
 use Everest\Http\Responses\Response;
 use Everest\Http\Responses\ResponseInterface;
+use Exception;
+use InvalidArgumentException;
+use LogicException;
+use RuntimeException;
 
 /**
  * Class for routing http requests
@@ -28,13 +33,13 @@ class Router
 {
     /**
      * Root routing context
-     * @var Everest\Http\RoutingContext
+     * @var RoutingContext
      */
     protected $rootContext;
 
     /**
      * Current routing context
-     * @var Everest\Http\RoutingContext
+     * @var RoutingContext
      */
     protected $currentContext;
 
@@ -69,7 +74,7 @@ class Router
         }
 
         if (! $invoker instanceof \Closure) {
-            throw new \InvalidArgumentException('Context invoker must be instance of Closure.');
+            throw new InvalidArgumentException('Context invoker must be instance of Closure.');
         }
 
         $this->currentContext->addSubContext($prefix, $invoker);
@@ -78,16 +83,14 @@ class Router
     }
 
     /**
-     * Adds middleware to the current context
+     *  Adds middleware to the current context
      *
      * @deprecated 1.0.0 No longer used by internal code and not recommended.
      *
      * @param array $middlewares
      *    The middlewares to add
-     *
-     * @return self
      */
-    public function middleware(...$middlewares)
+    public function middleware(...$middlewares): void
     {
         trigger_error('Method ' . __METHOD__ . ' is deprecated. Use ::before() and ::after() instead.', E_USER_DEPRECATED);
         $this->before(...$middlewares);
@@ -154,7 +157,7 @@ class Router
     public function route(Route $route, $handler)
     {
         if (! is_callable($handler)) {
-            throw new \InvalidArgumentException('Route handler must be callable.');
+            throw new InvalidArgumentException('Route handler must be callable.');
         }
 
         $this->currentContext->addRoute($route, $handler);
@@ -324,18 +327,14 @@ class Router
     }
 
     /**
-     * Trys to match a route against the current request.
+     *  Trys to match a route against the current request.
      *
-     * @throws \Exception
+     * @throws Exception
      *    If no route matches the request
      *
-     * @param Everest\Http\Request $request
-     *    The request to be handled
-     *
-     * @return Everest\Http\Response
-     *    The response of the matching handler
+     * @return Response The response of the matching handler
      */
-    public function handle(Request $request): ResponseInterface
+    public function handle(Request $request): Response
     {
         // Reset current context to root context
         $this->currentContext = $this->rootContext;
@@ -347,16 +346,17 @@ class Router
     }
 
     /**
-     * Get a chain of middlewares that pre process
-     * arguments before entering the current route handler
+     *  Get a chain of middlewares that pre process
+     *  arguments before entering the current route handler
      *
      * @param array $middlewares
      *    The middlewares to compose
      *
-     * @return Closure
-     *    The middleware chain
+     * @return \Closure The middleware chain
+     *
+     * @psalm-return \Closure(MessageInterface):mixed|\Closure(mixed):mixed
      */
-    private function composeMiddleware(array $middlewares)
+    private function composeMiddleware(array $middlewares): \Closure
     {
         $curryedMiddlewares = array_map(fn ($middleware) => fn (\Closure $next) => fn (MessageInterface $requestOrResponse) => call_user_func($middleware, $next, $requestOrResponse), array_reverse($middlewares));
 
@@ -364,22 +364,21 @@ class Router
     }
 
     /**
-     * Transforms any skalar handler result to a Everest\Http\Response object
+     *  Transforms any skalar handler result to a Everest\Http\Response object
      *
-     * @param  mixed $result
+     * @param mixed $result
      *    The handler result to be transformed
      *
-     * @return Everest\Http\Response
-     *    The response
+     * @return JsonResponse|RedirectResponse|Response The response
      */
-    private function resultToResponse(mixed $result): Response
+    private function resultToResponse(mixed $result): Response|RedirectResponse|JsonResponse
     {
         return match (true) {
             $result instanceof Response => $result,
             is_string($result) || is_numeric($result) => new Response($result),
             $result instanceof Uri => new RedirectResponse($result),
             is_array($result) || is_object($result) => new JsonResponse($result),
-            default => throw new \InvalidArgumentException('Invalid route handler return value'),
+            default => throw new InvalidArgumentException('Invalid route handler return value'),
         };
     }
 
@@ -446,15 +445,15 @@ class Router
         )($request);
 
         // Handle middleware result
-        if ($beforeResult instanceof Responses\ResponseInterface) {
+        if ($beforeResult instanceof ResponseInterface) {
             return $beforeResult;
-        } elseif ($beforeResult instanceof Requests\RequestInterface) {
+        } elseif ($beforeResult instanceof RequestInterface) {
             $request = $beforeResult;
         } else {
-            throw new \RuntimeException(sprintf(
+            throw new RuntimeException(sprintf(
                 'Expected before-middleware to return %s or %s but %s was returned.',
-                Responses\ResponseInterface::class,
-                Requests\RequestInterface::class,
+                ResponseInterface::class,
+                RequestInterface::class,
                 get_debug_type($beforeResult)
             ));
         }
@@ -473,7 +472,7 @@ class Router
             $routes = $this->currentContext->getRoutes();
 
             if (empty($subContexts) && empty($routes) && ! $isRoot) {
-                throw new \LogicException('Context without subcontext and routes found');
+                throw new LogicException('Context without subcontext and routes found');
             }
 
             // Compose after middlewares
@@ -512,7 +511,7 @@ class Router
                     ))
                 );
             }
-        } catch (\Exception $error) {
+        } catch (Exception $error) {
             if ($errorHandler = $context->getError()) {
                 return $this->resultToResponse(call_user_func(
                     $errorHandler,

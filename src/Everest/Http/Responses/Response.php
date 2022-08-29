@@ -17,8 +17,11 @@ use Everest\Http\Collections\HeaderCollection;
 use Everest\Http\Cookie;
 use Everest\Http\MessageTrait;
 use Everest\Http\Stream;
+use InvalidArgumentException;
+use RuntimeException;
+use Stringable;
 
-class Response implements ResponseInterface, \Stringable
+class Response implements ResponseInterface, Stringable
 {
     use MessageTrait;
 
@@ -119,12 +122,10 @@ class Response implements ResponseInterface, \Stringable
         return $this->reasonPhrase ?: self::STATUS_CODE_MAP[$this->getStatusCode()];
     }
 
-
     public function withCookies(array $cookies)
     {
         return $this->withAddedHeader('Set-Cookie', array_map(fn (Cookie $cookie) => $cookie->toHeaderLine(), $cookies));
     }
-
 
     public function withCookie(Cookie $cookie)
     {
@@ -139,7 +140,7 @@ class Response implements ResponseInterface, \Stringable
     public function sendHeaders()
     {
         if (headers_sent()) {
-            throw new \RuntimeException('Headers already sent.');
+            throw new RuntimeException('Headers already sent.');
         }
 
         foreach ($this->headers as $name => $values) {
@@ -170,7 +171,9 @@ class Response implements ResponseInterface, \Stringable
         return $this;
     }
 
-
+    /**
+     * @return static
+     */
     public function send()
     {
         $this->sendHeaders();
@@ -188,7 +191,7 @@ class Response implements ResponseInterface, \Stringable
     protected static function validateStatusCode(int $code): int
     {
         if (! array_key_exists($code, self::STATUS_CODE_MAP)) {
-            throw new \InvalidArgumentException(sprintf('The HTTP status code %s is unknown.', $code));
+            throw new InvalidArgumentException(sprintf('The HTTP status code %s is unknown.', $code));
         }
 
         return $code;

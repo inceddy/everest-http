@@ -37,7 +37,7 @@ class Request implements MessageInterface, RequestInterface
 
     /**
      * The request uri
-     * @var Everest\Http\Uri
+     * @var Uri
      */
     protected $uri;
 
@@ -56,13 +56,10 @@ class Request implements MessageInterface, RequestInterface
         // Set method flag
         $this->method = self::validateMethod($method);
 
-        
         $this->uri = Uri::from($uri);
 
-        
         $this->headers = new HeaderCollection($headers);
 
-        
         $this->body = Stream::from($body);
 
         // Set protocol version
@@ -92,6 +89,9 @@ class Request implements MessageInterface, RequestInterface
         return $target;
     }
 
+    /**
+     * @return static
+     */
     public function withRequestTarget(string $target)
     {
         if ($target === $this->target) {
@@ -114,6 +114,9 @@ class Request implements MessageInterface, RequestInterface
         return $this->method;
     }
 
+    /**
+     * @return static
+     */
     public function withMethod($method)
     {
         $method = self::validateMethod($method);
@@ -160,6 +163,9 @@ class Request implements MessageInterface, RequestInterface
         return $this->uri;
     }
 
+    /**
+     * @return static
+     */
     public function withUri(Uri $uri, bool $preserveHost = false)
     {
         if ($this->uri->equals($uri)) {

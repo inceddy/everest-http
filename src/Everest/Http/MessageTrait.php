@@ -14,17 +14,22 @@ declare(strict_types=1);
 
 namespace Everest\Http;
 
+use Everest\Http\Collections\HeaderCollection;
+use Everest\Http\Responses\Response;
+use InvalidArgumentException;
+use Psr\Http\Message\StreamInterface;
+
 trait MessageTrait
 {
     /**
      * The HTTP protocol version
-     * @var int
+     * @var string
      */
-    protected $protocolVersion = self::HTTP_VERSION_1_1;
+    protected $protocolVersion;
 
     /**
      * Headers
-     * @var Everest\Http\Collections\HeaderCollection
+     * @var HeaderCollection
      */
     protected $headers;
 
@@ -34,14 +39,12 @@ trait MessageTrait
      */
     protected $body;
 
-
     public function getProtocolVersion(): string
     {
         return $this->protocolVersion;
     }
 
-
-    public function withProtocolVersion(string $version)
+    public function withProtocolVersion(string $version): Response
     {
         $version = self::validateProtocolVersion($version);
 
@@ -55,18 +58,15 @@ trait MessageTrait
         return $new;
     }
 
-
     public function getHeaders(): array
     {
         return $this->headers->toArray();
     }
 
-
     public function hasHeader(string $name): bool
     {
         return $this->headers->has($name);
     }
-
 
     public function getHeader(string $name): array
     {
@@ -110,7 +110,7 @@ trait MessageTrait
      * @param string $name Case-insensitive header field name.
      * @param string|string[] $value Header value(s).
      * @return static
-     * @throws \InvalidArgumentException for invalid header names or values.
+     * @throws InvalidArgumentException for invalid header names or values.
      */
     public function withHeader(string $name, string|array $value)
     {
@@ -126,8 +126,7 @@ trait MessageTrait
         return $new;
     }
 
-
-    public function withAddedHeader(string $name, $value)
+    public function withAddedHeader(string $name, $value): Response
     {
         $newHeaders = $this->headers->withAdded($name, $value);
 
@@ -168,27 +167,27 @@ trait MessageTrait
     }
 
     /**
-     * Gets the body of the message.
+     *  Gets the body of the message.
      *
-     * @return StreamInterface Returns the body as a stream.
+     * @return Psr\Http\StreamInterface Returns the body as a stream.
      */
-    public function getBody(): Stream
+    public function getBody(): StreamInterface
     {
         return $this->body;
     }
 
     /**
-     * Return an instance with the specified message body.
+     *  Return an instance with the specified message body.
      *
-     * The body MUST be a StreamInterface object.
+     *  The body MUST be a StreamInterface object.
      *
-     * This method MUST be implemented in such a way as to retain the
-     * immutability of the message, and MUST return a new instance that has the
-     * new body stream.
+     *  This method MUST be implemented in such a way as to retain the
+     *  immutability of the message, and MUST return a new instance that has the
+     *  new body stream.
      *
-     * @param StreamInterface $body Body.
      * @return static
-     * @throws \InvalidArgumentException When the body is not valid.
+     *
+     * @throws InvalidArgumentException When the body is not valid.
      */
     public function withBody(Stream $body)
     {
@@ -201,7 +200,7 @@ trait MessageTrait
     private static function validateProtocolVersion(string $protocolVersion): string
     {
         if (! isset(self::PROTOCOL_VERSION_MAP[$protocolVersion])) {
-            throw new \InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'Invalid protocol version %s given. Use 1.0, 1.1 or 2.0 instead.',
                 $protocolVersion
             ));

@@ -130,14 +130,9 @@ class RoutingContext
     }
 
     /**
-     * Invokes this context
-     *
-     * @param  Everest\Http\Router $router
-     *    The router invoking this context
-     *
-     * @return self
+     *  Invokes this context
      */
-    public function __invoke(Router $router)
+    public function __invoke(Router $router): void
     {
         if ($this->invoker) {
             ($this->invoker)($router);
@@ -161,14 +156,14 @@ class RoutingContext
     }
 
     /**
-     * Adds a new parameter to this context
+     *  Adds a new parameter to this context
      *
      * @param string $name
      *    The parameter name that must match this pattern
      * @param string $pattern
      *    The regex pattern
      */
-    public function addPattern(string $name, string $pattern)
+    public function addPattern(string $name, string $pattern): void
     {
         $this->pattern[$name] = $pattern;
     }
@@ -185,12 +180,12 @@ class RoutingContext
     }
 
     /**
-     * Adds a new middleware to this context
+     *  Adds a new middleware to this context
      *
      * @param callable $middleware
      *    The middleware
      */
-    public function addMiddleware(callable $middleware, string $type = self::BEFORE)
+    public function addMiddleware(callable $middleware, string $type = self::BEFORE): void
     {
         $type = self::validateMiddlewareType($type);
         $this->middlewares[$type][] = $middleware;
@@ -219,14 +214,12 @@ class RoutingContext
     }
 
     /**
-     * Adds a new route and its handler to this context
+     *  Adds a new route and its handler to this context
      *
-     * @param Everest\Http\Route $route
-     *    The new route
      * @param callable $handler
      *    The route handler
      */
-    public function addRoute(Route $route, $handler)
+    public function addRoute(Route $route, $handler): void
     {
         $this->routes[] = [$route, $handler];
     }
@@ -243,15 +236,14 @@ class RoutingContext
     }
 
     /**
-     * Adds a new sub context to this context
+     *  Adds a new sub context to this context
      *
      * @param string  $prefix
      *    The path prefix of this context
      * @param Closure $invoker
      *    The closure invoking the new sub context
      *
-     * @return Everest\Http\RoutingContext
-     *    The new sub context
+     * @return self The new sub context
      */
     public function addSubContext(string $prefix, Closure $invoker): self
     {
@@ -293,12 +285,12 @@ class RoutingContext
     }
 
     /**
-     * Sets the default handler for this context
+     *  Sets the default handler for this context
      *
      * @param callable $defaultHandler
      *    The default handler
      */
-    public function setDefault(callable $defaultHandler)
+    public function setDefault(callable $defaultHandler): void
     {
         $this->default = $defaultHandler;
     }
@@ -316,12 +308,12 @@ class RoutingContext
     }
 
     /**
-     * Sets the error handler for this context
+     *  Sets the error handler for this context
      *
      * @param callable $errorHandler
      *    The error handler
      */
-    public function setError(callable $errorHandler)
+    public function setError(callable $errorHandler): void
     {
         $this->error = $errorHandler;
     }

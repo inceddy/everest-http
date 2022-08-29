@@ -14,13 +14,14 @@ declare(strict_types=1);
 namespace Everest\Http\Tests;
 
 use Everest\Http\Uri;
+use PHPUnit\Framework\TestCase;
 
-if (! class_exists(\PHPUnit\Framework\TestCase::class)) {
+if (! class_exists(TestCase::class)) {
     die('PHPUnit is missing');
 }
 
 
-class WebTestCase extends \PHPUnit\Framework\TestCase
+class WebTestCase extends TestCase
 {
     public function setupWebRequest(Uri $uri = null)
     {

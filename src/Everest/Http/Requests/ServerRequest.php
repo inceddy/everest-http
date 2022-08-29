@@ -13,11 +13,16 @@ declare(strict_types=1);
 
 namespace Everest\Http\Requests;
 
+use ArrayAccess;
+use Closure;
 use Everest\Http\Collections\ParameterCollection;
+use Everest\Http\Requests\Everest\Http\ParameterCollectionInterface;
 use Everest\Http\Stream;
 use Everest\Http\UploadedFile;
 use Everest\Http\Uri;
 use Psr\Http\Message\UploadedFileInterface;
+use RuntimeException;
+use SimpleXMLElement;
 
 class ServerRequest extends Request implements RequestInterface
 {
@@ -53,7 +58,7 @@ class ServerRequest extends Request implements RequestInterface
 
     /**
      * Array of parsers for different body content types
-     * @var array<\Closure>
+     * @var array<Closure>
      */
     protected static $bodyParsers = [];
 
@@ -78,7 +83,7 @@ class ServerRequest extends Request implements RequestInterface
         $this->attributes = [];
     }
 
-    public static function addBodyParser(string $mediaType, callable $parser)
+    public static function addBodyParser(string $mediaType, callable $parser): void
     {
         self::$bodyParsers[strtolower($mediaType)] = $parser;
     }
@@ -142,7 +147,7 @@ class ServerRequest extends Request implements RequestInterface
     {
         // Check for proxy first
         $host = isset($_SERVER['HTTP_X_FORWARDED_HOST']) ?
-          last(explode(',', (string) $_SERVER['HTTP_X_FORWARDED_HOST'])) :
+          end(explode(',', (string) $_SERVER['HTTP_X_FORWARDED_HOST'])) :
           $_SERVER['HTTP_HOST'] ??
           $_SERVER['HTTP_SERVER_NAME'] ??
           $_SERVER['HTTP_SERVER_ADDR'];
@@ -153,10 +158,9 @@ class ServerRequest extends Request implements RequestInterface
     }
 
     /**
-     * Returns the port of this request as string.
-     * @return string
+     *  Returns the port of this request as string.
      */
-    public static function getPort(): ? int
+    public static function getPort(): int|null
     {
         // Check for proxy first
         if (isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
@@ -292,7 +296,7 @@ class ServerRequest extends Request implements RequestInterface
            [];
     }
 
-    public function withQueryParams(array $queryParams)
+    public function withQueryParams(array $queryParams): static
     {
         $new = clone $this;
         $new->query = new ParameterCollection($queryParams);
@@ -313,15 +317,14 @@ class ServerRequest extends Request implements RequestInterface
      */
     public function getBodyParam(string $key, mixed $default = null)
     {
-        if (is_array($this->parsedBody) || $this->parsedBody instanceof \ArrayAccess) {
+        if (is_array($this->parsedBody) || $this->parsedBody instanceof ArrayAccess) {
             return $this->parsedBody[$key] ?? $default;
         }
 
         return $default;
     }
 
-
-    public function getParsedBody()
+    public function getParsedBody(): array|object|null
     {
         $mediaType = null;
         $parts = [];
@@ -343,7 +346,7 @@ class ServerRequest extends Request implements RequestInterface
             $parsed = call_user_func(self::$bodyParsers[$mediaType], $body);
 
             if ($parsed !== null && ! is_object($parsed) && ! is_array($parsed)) {
-                throw new \RuntimeException(
+                throw new RuntimeException(
                     'Request body parser return value must be an array, an object, or null'
                 );
             }
@@ -354,7 +357,7 @@ class ServerRequest extends Request implements RequestInterface
         return null;
     }
 
-    public function withParsedBody($parsedBody)
+    public function withParsedBody($parsedBody): static
     {
         if ($parsedBody !== null && ! is_object($parsedBody) && ! is_array($parsedBody)) {
             throw new \InvalidArgumentException('Parsed body must be an array, an object, or null');
@@ -387,7 +390,7 @@ class ServerRequest extends Request implements RequestInterface
         return $this->uploadedFiles->toArray();
     }
 
-    public function withUploadedFiles(array $uploadedFiles)
+    public function withUploadedFiles(array $uploadedFiles): static
     {
         $new = clone $this;
 
@@ -412,7 +415,7 @@ class ServerRequest extends Request implements RequestInterface
         return $this->cookie->get($name) ?: $default;
     }
 
-    public function withCookieParams(array $cookieParams)
+    public function withCookieParams(array $cookieParams): static
     {
         $new = clone $this;
         $new->cookie = new ParameterCollection($cookieParams);
@@ -566,14 +569,16 @@ class ServerRequest extends Request implements RequestInterface
     }
 
     /**
-     * Normalize an array of file specifications.
+     *  Normalize an array of file specifications.
      *
-     * Loops through all nested files and returns a normalized array of
-     * UploadedFileInterface instances.
+     *  Loops through all nested files and returns a normalized array of
+     *  UploadedFileInterface instances.
      *
-     * @return UploadedFileInterface[]
+     * @return (UploadedFileInterface|array)[]
+     *
+     * @psalm-return array<UploadedFileInterface|array>
      */
-    private static function normalizeNestedFileSpec(array $files = []) : array
+    private static function normalizeNestedFileSpec(array $files = []): array
     {
         $normalizedFiles = [];
 
@@ -594,7 +599,7 @@ class ServerRequest extends Request implements RequestInterface
 
 // Define default body parsers
 
-$xmlParser = function ($body) {
+$xmlParser = function ($body): SimpleXMLElement|null {
     $backup_errors = libxml_use_internal_errors(true);
 
     $xml = simplexml_load_string((string) $body);

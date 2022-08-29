@@ -15,6 +15,7 @@ namespace Everest\Http\Responses;
 
 use Everest\Http\Cookie;
 use Everest\Http\MessageInterface;
+use InvalidArgumentException;
 
 /**
  * Representation of an outgoing, server-side response.
@@ -255,7 +256,7 @@ interface ResponseInterface extends MessageInterface
      *     provided status code; if none is provided, implementations MAY
      *     use the defaults as suggested in the HTTP specification.
      * @return static
-     * @throws \InvalidArgumentException For invalid status code arguments.
+     * @throws InvalidArgumentException For invalid status code arguments.
      */
     public function withStatus(int $code, string $reasonPhrase = '');
 

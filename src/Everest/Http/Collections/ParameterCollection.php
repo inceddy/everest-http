@@ -16,12 +16,13 @@ namespace Everest\Http\Collections;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
+use Stringable;
 
 class ParameterCollection implements
     ParameterCollectionInterface,
     Countable,
     IteratorAggregate,
-    \Stringable
+    Stringable
 {
     /**
      * The parameter cache as key-value-storage.
@@ -46,87 +47,78 @@ class ParameterCollection implements
     {
         $string = '';
 
-        foreach ($this->parameters as $key => $parameter) {
-            $string .= sprintf("%s = %s\r\n", $key, $parameter);
+        foreach ($this->parameters as $name => $parameter) {
+            $string .= sprintf("%s = %s\r\n", $name, $parameter);
         }
 
         return $string;
     }
 
-
-    public function has(string $key): bool
+    public function has(string $name): bool
     {
-        return array_key_exists($key, $this->parameters);
+        return array_key_exists($name, $this->parameters);
     }
 
-
-    public function get(string $key)
+    public function get(string $name)
     {
-        return $this->has($key) ? $this->parameters[$key] : null;
+        return $this->has($name) ? $this->parameters[$name] : null;
     }
 
-
-    public function set(string $key, $value, array $options = [])
+    public function set(string $name, $value, array $options = []): static
     {
-        $this->parameters[$key] = $value;
+        $this->parameters[$name] = $value;
         return $this;
     }
 
-
-    public function with(string $key, $value, array $options = [])
+    public function with(string $name, $value, array $options = []): static
     {
-        if ($value === $this->get($key)) {
+        if ($value === $this->get($name)) {
             return $this;
         }
 
         $new = clone $this;
-        return $new->set($key, $value);
+        return $new->set($name, $value);
     }
 
-
-    public function push(string $key, $value)
+    public function push(string $name, $value): static
     {
         // Not yet set
-        if (! $this->has($key)) {
-            return $this->set($key, [$value]);
+        if (! $this->has($name)) {
+            return $this->set($name, [$value]);
         }
 
         // Already set with array value
-        if (is_array($this->parameters[$key])) {
-            $this->parameters[$key][] = $value;
+        if (is_array($this->parameters[$name])) {
+            $this->parameters[$name][] = $value;
             return $this;
         }
 
         // Set with single value
-        $this->parameters[$key] = [$this->parameters[$key], $value];
+        $this->parameters[$name] = [$this->parameters[$name], $value];
         return $this;
     }
 
-
-    public function withAdded(string $key, $value)
+    public function withAdded(string $name, $value): static
     {
         $new = clone $this;
-        return $new->push($key, $value);
+        return $new->push($name, $value);
     }
 
-
-    public function delete(string $key)
+    public function delete(string $name): static
     {
-        unset($this->parameters[$key]);
+        unset($this->parameters[$name]);
         return $this;
     }
 
-
-    public function without(string $key)
+    public function without(string $name): static
     {
-        if (! $this->has($key)) {
+        if (! $this->has($name)) {
             return $this;
         }
 
         $new = clone $this;
-        return $new->delete($key);
+        return $new->delete($name);
     }
-
 
     public function toArray(): array
     {

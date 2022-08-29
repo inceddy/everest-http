@@ -21,13 +21,13 @@ class RedirectResponse extends Response
     /**
      * The redirection target
      */
-    private \Everest\Http\Uri $redirectionTarget;
+    private Uri $redirectionTarget;
 
     /**
      * Constructor
      * Invokes a new HTTP redirect response
      *
-     * @param Everest\Http\Uri $uri
+     * @param Uri $uri
      *    The redirection target uri
      * @param integer $code
      *    The response code
@@ -53,7 +53,7 @@ class RedirectResponse extends Response
         return $this->redirectionTarget;
     }
 
-    public function withRedirectionTarget(Uri $uri)
+    public function withRedirectionTarget(Uri $uri): static
     {
         if ((string) $uri === (string) $this->redirectionTarget) {
             return $this;
