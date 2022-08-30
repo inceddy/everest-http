@@ -327,14 +327,14 @@ class Router
     }
 
     /**
-     *  Trys to match a route against the current request.
+     * Trys to match a route against the current request.
      *
      * @throws Exception
      *    If no route matches the request
      *
      * @return Response The response of the matching handler
      */
-    public function handle(Request $request): Response
+    public function handle(ServerRequest $request): Response
     {
         // Reset current context to root context
         $this->currentContext = $this->rootContext;

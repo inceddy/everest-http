@@ -16,7 +16,6 @@ namespace Everest\Http\Requests;
 use ArrayAccess;
 use Closure;
 use Everest\Http\Collections\ParameterCollection;
-use Everest\Http\Requests\Everest\Http\ParameterCollectionInterface;
 use Everest\Http\Stream;
 use Everest\Http\UploadedFile;
 use Everest\Http\Uri;
