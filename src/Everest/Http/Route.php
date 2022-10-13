@@ -179,7 +179,7 @@ class Route implements Stringable
             $length = sizeof($matches);
 
             for ($i = 1; $i < $length; $i++) {
-                $variables[$this->parameter[$i - 1]] = $matches[$i];
+                $variables[$this->parameter[$i - 1]] = urldecode($matches[$i]);
             }
 
             return $variables;

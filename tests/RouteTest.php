@@ -17,6 +17,12 @@ class RouteTest extends \PHPUnit\Framework\TestCase
 
         $this->uri->method('getPath')
             ->willReturn('test/path/user123');
+
+        $this->uriWithSpecialChars = $this->getMockBuilder(Uri::class)
+            ->getMock();
+
+        $this->uriWithSpecialChars->method('getPath')
+            ->willReturn('test/%C3%96%C3%9F%C3%A4');
     }
 
     public function testRouteIgnoresSlashes()
@@ -38,6 +44,14 @@ class RouteTest extends \PHPUnit\Framework\TestCase
             'path' => 'path',
             'user' => 'user123',
         ], $route->parse($this->uri));
+    }
+
+    public function testURLEncodedRouteVariables()
+    {
+        $route = new Route('test/{var}');
+        $this->assertEquals([
+            'var' => 'Ößä',
+        ], $route->parse($this->uriWithSpecialChars));
     }
 
     public function testRouteVariableValidation()
