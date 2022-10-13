@@ -145,11 +145,15 @@ class ServerRequest extends Request implements RequestInterface
     public static function getHost(): string
     {
         // Check for proxy first
-        $host = isset($_SERVER['HTTP_X_FORWARDED_HOST']) ?
-          end(explode(',', (string) $_SERVER['HTTP_X_FORWARDED_HOST'])) :
-          $_SERVER['HTTP_HOST'] ??
-          $_SERVER['HTTP_SERVER_NAME'] ??
-          $_SERVER['HTTP_SERVER_ADDR'];
+        if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+            $forwaredHostNames = explode(',', (string) $_SERVER['HTTP_X_FORWARDED_HOST']);
+            $host = end($forwaredHostNames);
+        } else {
+            $host = 
+              $_SERVER['HTTP_HOST'] ??
+              $_SERVER['HTTP_SERVER_NAME'] ??
+              $_SERVER['HTTP_SERVER_ADDR'];
+        }
 
         // trim and remove port number from host
         // host is lowercase as per RFC 952/2181
