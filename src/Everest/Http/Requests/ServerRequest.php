@@ -156,7 +156,7 @@ class ServerRequest extends Request implements RequestInterface {
   {
       // Check for proxy first
       $host = isset($_SERVER['HTTP_X_FORWARDED_HOST']) ?
-          last(explode(',', $_SERVER['HTTP_X_FORWARDED_HOST'])) : 
+          end(explode(',', $_SERVER['HTTP_X_FORWARDED_HOST'])) : 
           $_SERVER['HTTP_HOST'] ?? 
           $_SERVER['HTTP_SERVER_NAME'] ?? 
           $_SERVER['HTTP_SERVER_ADDR'];
